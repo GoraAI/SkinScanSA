@@ -21,7 +21,7 @@ import com.skinscan.sa.data.db.entity.UserProfileEntity
         UserProfileEntity::class
     ],
     version = 1,
-    exportSchema = true
+    exportSchema = false // TODO: Enable schema export for production
 )
 @TypeConverters(DateConverters::class)
 abstract class AppDatabase : RoomDatabase() {

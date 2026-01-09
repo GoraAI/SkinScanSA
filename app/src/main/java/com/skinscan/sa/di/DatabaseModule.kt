@@ -11,8 +11,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import net.sqlcipher.database.SQLiteDatabase
-import net.sqlcipher.database.SupportFactory
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import javax.inject.Singleton
 
 /**
@@ -38,12 +37,14 @@ object DatabaseModule {
             System.loadLibrary("sqlcipher")
 
             // Create Room database with SQLCipher factory
+            val factory = SupportOpenHelperFactory(passphrase)
+
             return Room.databaseBuilder(
                 context,
                 AppDatabase::class.java,
                 AppDatabase.DATABASE_NAME
             )
-                .openHelperFactory(SupportFactory(passphrase))
+                .openHelperFactory(factory)
                 .fallbackToDestructiveMigration() // For MVP - replace with proper migrations later
                 .build()
         } catch (e: Exception) {

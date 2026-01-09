@@ -6,7 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.skinscan.sa.data.db.AppDatabase
 import com.skinscan.sa.data.encryption.EncryptionManager
-import net.sqlcipher.database.SupportFactory
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -38,11 +38,12 @@ class DatabaseEncryptionTest {
 
         // Create encrypted database
         val passphrase = encryptionManager.getDatabasePassphrase()
+        val factory = SupportOpenHelperFactory(passphrase)
         database = Room.inMemoryDatabaseBuilder(
             context,
             AppDatabase::class.java
         )
-            .openHelperFactory(SupportFactory(passphrase))
+            .openHelperFactory(factory)
             .build()
     }
 
