@@ -10,27 +10,27 @@ import org.junit.Assert.*
 class ThemeTest {
     @Test
     fun `primary color is Teal 600`() {
-        assertEquals(0xFF00897B.toInt(), Teal600.value.toLong().toInt())
+        assertEquals(0xFF00897B.toULong(), Teal600.value)
     }
 
     @Test
     fun `secondary color is Deep Purple 700`() {
-        assertEquals(0xFF512DA8.toInt(), DeepPurple700.value.toLong().toInt())
+        assertEquals(0xFF512DA8.toULong(), DeepPurple700.value)
     }
 
     @Test
     fun `accent color is Coral 400`() {
-        assertEquals(0xFFFF7043.toInt(), Coral400.value.toLong().toInt())
+        assertEquals(0xFFFF7043.toULong(), Coral400.value)
     }
 
     @Test
     fun `success color is Green 600`() {
-        assertEquals(0xFF43A047.toInt(), Green600.value.toLong().toInt())
+        assertEquals(0xFF43A047.toULong(), Green600.value)
     }
 
     @Test
     fun `error color is Red 600`() {
-        assertEquals(0xFFE53935.toInt(), Red600.value.toLong().toInt())
+        assertEquals(0xFFE53935.toULong(), Red600.value)
     }
 
     @Test
