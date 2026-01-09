@@ -1,0 +1,299 @@
+# Workflow Status - SkinScan SA
+
+# This tracks progress through BMM methodology Analysis, Planning, and Solutioning phases.
+# Implementation phase is tracked separately in sprint-status.yaml
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met (e.g., if_has_ui)
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/product-brief.md")
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2026-01-09"
+project: "SkinScan SA"
+project_type: "AI-Powered Skincare Analysis for South Africa"
+selected_track: "bmad-method"
+field_type: "greenfield"
+workflow_path: ".bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
+
+# ============================================
+# WORKFLOW STATUS TRACKING
+# ============================================
+
+workflow_status:
+  # ==========================================
+  # PHASE 0: Discovery (Optional)
+  # ==========================================
+  phase_0_discovery:
+    - id: brainstorm-project
+      status: skipped
+      agent: analyst
+      command: /bmad:bmm:workflows:brainstorm-project
+      selected: false
+      notes: "Skipped - user chose to go straight to UX Design and Architecture"
+
+    - id: research
+      status: skipped
+      agent: analyst
+      command: /bmad:bmm:workflows:research
+      selected: false
+      notes: "Skipped - user chose to go straight to UX Design and Architecture"
+
+    - id: product-brief
+      status: skipped
+      agent: analyst
+      command: /bmad:bmm:workflows:product-brief
+      selected: false
+      notes: "Skipped - comprehensive PRD already exists"
+
+  # ==========================================
+  # PHASE 1: Planning
+  # ==========================================
+  phase_1_planning:
+    - id: prd
+      status: "docs/skinscan-sa-prd.md"
+      agent: pm
+      command: /bmad:bmm:workflows:prd
+      output: "Comprehensive PRD with 12 sections"
+      completed: "2026-01-09"
+      notes: "772 lines covering market, architecture, requirements, compliance, roadmap"
+      key_sections:
+        - "Market Opportunity: $813M-2.25B SA skincare market"
+        - "Technical Architecture: Built on Google AI Edge Gallery / LiteRT"
+        - "5 new modules: Skin Analysis, Product Recommendation, Database, Profile, Explainability"
+        - "POPIA Compliance: Biometric data handling (Section 26)"
+        - "MVP: Hyperpigmentation + Acne for melanin-rich skin (Fitzpatrick IV-VI)"
+        - "Performance targets: <3 sec analysis, <500ms LLM TTFT, <400MB memory"
+
+    - id: validate-prd
+      status: optional
+      agent: pm
+      command: /bmad:bmm:workflows:validate-prd
+
+    - id: create-ux-design
+      status: "docs/ux-design-specification.md"
+      condition: if_has_ui
+      agent: ux-designer
+      command: /bmad:bmm:workflows:create-ux-design
+      output: "Complete UX Design Specification"
+      completed: "2026-01-09"
+      notes: "Comprehensive UX design with Material 3, 5 key screens, 3 user journeys, WCAG AA accessibility"
+      deliverables:
+        - "Design system: Material Design 3 with 'Trusted Glow' theme"
+        - "Visual foundation: Colors, typography, spacing system"
+        - "5 key screens: Home, Face Scan, Results, Products, POPIA Consent"
+        - "3 user journeys: First-time, returning user, browse without scan"
+        - "5 custom components: Face scan overlay, skin visualization, product cards, consent checkboxes, progress timeline"
+        - "UX patterns: Buttons, feedback, loading, forms, modals, navigation"
+        - "Responsive strategy: Mobile-first with tablet support (3 breakpoints)"
+        - "Accessibility: WCAG 2.1 AA compliant with TalkBack support"
+
+  # ==========================================
+  # PHASE 2: Solutioning
+  # ==========================================
+  phase_2_solutioning:
+    - id: create-architecture
+      status: "docs/skinscan-sa-architecture.md"
+      agent: architect
+      command: /bmad:bmm:workflows:architecture
+      output: "Complete System Architecture"
+      completed: "2026-01-09"
+      notes: "Comprehensive architecture design with 5 core modules, security, performance, deployment"
+      deliverables:
+        - "Architecture document: 20,000+ words covering all 5 modules"
+        - "Threat model: 29 threats identified, 8 CRITICAL, all mitigated"
+        - "Health check: 92/100 score, READY FOR IMPLEMENTATION"
+        - "6 Architecture Decision Records (ADRs) documented"
+        - "C4 diagrams: System context, container, component, data flow"
+      focus_areas:
+        - "Skin Analysis Engine: MediaPipe Face Mesh → EfficientNet-Lite → multi-head output"
+        - "Product Recommendation Engine: Concern-to-ingredient mapping, ranking algorithm"
+        - "SA Product Database: SQLite schema, delta sync strategy, Clicks API integration"
+        - "User Profile Manager: Room DB with scan results, preferences, allergies"
+        - "Explainability Module: Gemma 3n prompt templates, TTFT optimization"
+        - "UI Layer: Jetpack Compose screens for scan, results, recommendations"
+        - "Data Flow: Image capture → preprocessing → inference → recommendation → explanation"
+        - "POPIA Compliance: On-device processing, no image transmission, local encryption, SQLCipher"
+      architecture_artifacts:
+        - file: "docs/skinscan-sa-architecture.md"
+          size: "20,000+ words"
+          sections: 10
+          description: "Complete system architecture with module designs, data architecture, integration, security, performance, deployment"
+        - file: "docs/skinscan-sa-threat-model.md"
+          size: "8,000+ words"
+          threats: 29
+          description: "STRIDE-based threat model with POPIA compliance focus, mitigation strategies, security testing plan"
+        - file: "docs/architecture-health-check.md"
+          size: "6,000+ words"
+          score: "92/100"
+          description: "Architecture validation against all PRD/UX requirements, technology stack validation, readiness assessment"
+      key_decisions:
+        - "ADR-001: SQLCipher for database encryption (POPIA Section 26 compliance)"
+        - "ADR-002: Extend AI Edge Gallery (not fork) to inherit model management"
+        - "ADR-003: On-device Gemma 3n LLM for explainability (privacy-first)"
+        - "ADR-004: MediaPipe Face Mesh for face detection (Fitz IV-VI tested)"
+        - "ADR-005: Single APK (no dynamic feature modules for MVP simplicity)"
+        - "ADR-006: 100% Jetpack Compose UI (no XML layouts)"
+      critical_findings:
+        - "Memory budget tight: 759MB peak (Gemma 3n = 529MB). Mitigation: Lazy loading + unload after use"
+        - "Clicks API availability UNKNOWN: Must contact Clicks before development starts"
+        - "POPIA legal review required: Consent text, PIIA, Information Officer registration"
+      blockers_mitigated:
+        - blocker: "Clicks API availability"
+          severity: CRITICAL (MITIGATED)
+          mitigation: "Using mock data provider with switchable implementation - Story 3.6 updated"
+          action_deferred: "Integrate real API when credentials obtained (post-MVP)"
+        - blocker: "POPIA legal review"
+          severity: MEDIUM (DEFERRED)
+          mitigation: "Using placeholder consent text for MVP development"
+          action_deferred: "Engage lawyer for final consent text, complete PIIA, register Information Officer (post-MVP)"
+
+    - id: create-epics-and-stories
+      status: "docs/epics.md"
+      agent: pm
+      command: /bmad:bmm:workflows:create-epics-and-stories
+      output: "Complete Epic & Story Breakdown"
+      completed: "2026-01-09"
+      updated: "2026-01-09 (blockers mitigated)"
+      notes: "6 epics, 36 user stories, complete FR coverage matrix, blockers removed"
+      deliverables:
+        - "Epic 1: Foundation & Onboarding (5 stories) - Project setup, theme, POPIA consent (placeholder)"
+        - "Epic 2: Face Scan & Skin Analysis (6 stories) - Camera, ML inference, results display"
+        - "Epic 3: Product Database & Recommendations (6 stories) - Seed DB, ranking algorithm, Mock Clicks API"
+        - "Epic 4: User Profile & Progress Tracking (4 stories) - History, comparison, timeline"
+        - "Epic 5: Explainability with Gemma 3n (5 stories) - LLM download, prompt engineering, explanations"
+        - "Epic 6: POPIA Compliance & Security (6 stories) - SQLCipher, certificate pinning infrastructure, audit logging"
+      key_features:
+        - "All 33 functional requirements mapped to stories"
+        - "BDD-style acceptance criteria (Given/When/Then)"
+        - "Implementation-ready with code snippets and technical notes"
+        - "User value-based epic organization (not technical layers)"
+        - "POPIA compliance throughout all stories"
+        - "FR coverage matrix for traceability"
+        - "Mock data strategy: Clicks API uses mock provider (Story 3.6)"
+        - "Deferred legal review: Placeholder POPIA consent text for MVP"
+
+    - id: test-design
+      status: recommended
+      agent: tea
+      command: /bmad:bmm:workflows:test-design
+      output: "System-level testability review"
+      notes: "Test strategy for ML accuracy, POPIA compliance, performance"
+
+    - id: validate-architecture
+      status: optional
+      agent: architect
+      command: /bmad:bmm:workflows:validate-architecture
+
+    - id: implementation-readiness
+      status: required
+      agent: architect
+      command: /bmad:bmm:workflows:implementation-readiness
+      notes: "Validate PRD + UX + Architecture + Epics cohesion before implementation"
+
+  # ==========================================
+  # PHASE 4: Implementation
+  # ==========================================
+  phase_4_implementation:
+    - id: sprint-planning
+      status: "sprint-status.yaml"
+      agent: sm
+      command: /bmad:bmm:workflows:sprint-planning
+      output: "Sprint 1 Planning Complete"
+      completed: "2026-01-09"
+      notes: "Sprint 1: 8 stories - Walking Skeleton (Foundation + First User Journey)"
+      sprint_details:
+        - "Sprint 1 Start: 2026-01-09"
+        - "Sprint 1 End: 2026-01-23 (2 weeks)"
+        - "Sprint Goal: Launch → Consent → Camera Screen"
+        - "Stories: 1.1, 1.2, 1.3, 6.1, 6.3, 1.4, 2.1, 2.2"
+        - "Estimated: 9-12 dev days"
+
+# ==========================================
+# CURRENT STATUS & NEXT STEPS
+# ==========================================
+current_phase: "Phase 4 - Implementation (Sprint 1 In Progress)"
+current_workflow: "dev-story"
+current_story: "1.1"
+next_agent: "dev"
+blocking: false
+sprint_status:
+  - "✅ GitHub Repository Created: https://github.com/GoraAI/SkinScanSA"
+  - "✅ POPIA Consent Text Drafted: docs/popia-consent-text-placeholder.md"
+  - "✅ Sprint 1 Planning Complete: 8 stories, 9-12 dev days estimated"
+  - "🏃 Sprint 1 In Progress: Walking Skeleton - Foundation + First User Journey"
+  - "📋 Current Story: 1.1 - Project Initialization & Dependencies"
+  - "🎯 Sprint Goal: Launch → Consent → Camera Screen with oval overlay"
+  - "📅 Sprint 1 End Date: 2026-01-23"
+
+# ==========================================
+# PROJECT SPECIFIC NOTES
+# ==========================================
+project_notes:
+  overview: "SkinScan SA is an AI-powered mobile app for personalized skincare analysis and product recommendations, optimized for South African market and melanin-rich skin tones"
+
+  base_technology:
+    - "Built on Google AI Edge Gallery architecture"
+    - "LiteRT (formerly TensorFlow Lite) for on-device ML"
+    - "MediaPipe for face detection and landmarks"
+    - "Jetpack Compose + Material Design 3"
+    - "MVVM + Clean Architecture"
+    - "Room database + Proto DataStore"
+
+  core_modules_to_build:
+    - "Skin Analysis Engine (MediaPipe Face Mesh + EfficientNet-Lite)"
+    - "Product Recommendation Engine (ingredient-concern matching)"
+    - "SA Product Database (SQLite + Clicks API sync)"
+    - "User Profile Manager (scan history, preferences)"
+    - "Explainability Module (Gemma 3n integration)"
+
+  mvp_scope:
+    - "Single face scan flow"
+    - "Hyperpigmentation + Acne detection (Fitzpatrick IV-VI optimized)"
+    - "50 curated products (cleanser, treatment, moisturizer, sunscreen)"
+    - "Clicks integration only"
+    - "English only, Android only"
+    - "On-device processing (privacy-first)"
+
+  success_criteria:
+    - "6-month target: 100K downloads, 40K MAU, 4.0+ rating"
+    - "ML accuracy: <5% gap across Fitzpatrick scale"
+    - "Performance: <3 sec analysis on Snapdragon 6xx"
+    - "POPIA compliant: No image transmission, local encryption"
+
+key_risks:
+  - risk: "AI bias against darker skin tones"
+    mitigation: "60%+ Fitzpatrick IV-VI training data, documented accuracy by skin tone"
+    severity: HIGH
+
+  - risk: "POPIA violation (biometric data mishandling)"
+    mitigation: "On-device only, register Information Officer, complete PIIA"
+    severity: CRITICAL
+
+  - risk: "Model inaccuracy leading to wrong recommendations"
+    mitigation: "Dermatologist validation, user feedback loop, cosmetic claims only"
+    severity: HIGH
+
+  - risk: "Clicks API unavailability or changes"
+    mitigation: "Multi-retailer strategy, D2C brand fallback"
+    severity: MEDIUM
+
+technical_challenges:
+  - "MediaPipe Face Mesh integration (468 landmarks, <200ms latency)"
+  - "Skin analysis model training with diverse dataset (50K+ images, 60%+ Fitz IV-VI)"
+  - "Product database sync strategy (delta updates, <100KB/day)"
+  - "Gemma 3n prompt engineering for explainability (<500ms TTFT)"
+  - "POPIA-compliant biometric data handling"
+
+market_opportunity:
+  - "SA skincare market: $813M-2.25B (2025)"
+  - "Target: 19M Gen Z (29% of population)"
+  - "Smartphone penetration: 82.5% (91.3% by 2028)"
+  - "Underserved: 80%+ melanin-rich skin with 35% AI accuracy gap"
+  - "Retail partners: Clicks (945+ stores), Dis-Chem (327+ stores)"

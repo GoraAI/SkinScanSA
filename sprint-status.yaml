@@ -1,0 +1,349 @@
+# Sprint Status - SkinScan SA MVP
+# Generated: 2026-01-09
+# Scrum Master: Bob
+# Sprint Planning Session: Sprint 1 Kickoff
+
+project: "SkinScan SA"
+repository: "https://github.com/GoraAI/SkinScanSA"
+current_sprint: 1
+sprint_start_date: "2026-01-09"
+sprint_end_date: "2026-01-23" # 2 weeks
+sprint_goal: "Walking Skeleton - Foundation + First User Journey (Launch → Consent → Camera Screen)"
+
+# Sprint Progress
+total_sprints_planned: 5
+sprints_completed: 0
+total_stories: 36
+stories_completed: 0
+stories_in_progress: 0
+stories_blocked: 0
+
+# ============================================
+# SPRINT 1: FOUNDATION + FIRST USER JOURNEY
+# ============================================
+sprint_1:
+  goal: "Walking Skeleton - Foundation + First User Journey"
+  theme: "User can launch app → see splash → grant consent → grant camera permission → see face scan screen with guidance overlay (no ML yet)"
+  start_date: "2026-01-09"
+  end_date: "2026-01-23"
+  status: "IN_PROGRESS"
+
+  stories:
+    # EPIC 1: Foundation & Onboarding
+    - id: "1.1"
+      title: "Project Initialization & Dependencies"
+      epic: "Epic 1: Foundation & Onboarding"
+      status: "TODO"
+      assignee: "Amelia (Dev Agent)"
+      priority: "CRITICAL"
+      complexity: "HIGH"
+      estimated_days: 3-4
+      acceptance_criteria:
+        - "Gradle 8.10.2+ with Kotlin 2.1.0+"
+        - "Min SDK 26, Target SDK 35"
+        - "Jetpack Compose BOM + Material 3"
+        - "Hilt DI configured"
+        - "Room v4 + Proto DataStore"
+        - "LiteRT + MediaPipe dependencies"
+        - "Package: com.skinscan.sa"
+        - "Clean Architecture structure (ui/domain/data/core)"
+        - "GitHub Actions CI/CD (lint, test, APK build)"
+      technical_notes:
+        - "Start from scratch (not copying OnDevice AI Gallery)"
+        - "SQLCipher dependency added from start"
+        - "ProGuard rules for LiteRT/MediaPipe"
+      blockers: []
+
+    - id: "1.2"
+      title: "Material 3 Theme Implementation"
+      epic: "Epic 1: Foundation & Onboarding"
+      status: "TODO"
+      assignee: "Amelia (Dev Agent)"
+      priority: "HIGH"
+      complexity: "LOW"
+      estimated_days: 0.5
+      depends_on: ["1.1"]
+      acceptance_criteria:
+        - "Material 3 'Trusted Glow' theme configured"
+        - "Primary: Teal 600, Accent: Coral, Background: Warm Off-White"
+        - "Typography: Poppins (headings), Open Sans (body)"
+        - "4dp spacing system"
+        - "Dark mode NOT required for MVP"
+      technical_notes:
+        - "Reference: /home/goraai/SkinScanSA/docs/ux-design-specification.md"
+        - "Implement in ui/theme/Theme.kt, Color.kt, Type.kt"
+      blockers: []
+
+    - id: "1.3"
+      title: "Splash Screen & Navigation Setup"
+      epic: "Epic 1: Foundation & Onboarding"
+      status: "TODO"
+      assignee: "Amelia (Dev Agent)"
+      priority: "HIGH"
+      complexity: "MEDIUM"
+      estimated_days: 1
+      depends_on: ["1.1", "1.2"]
+      acceptance_criteria:
+        - "Splash screen with SkinScan SA logo (2 seconds)"
+        - "Bottom navigation: Home, Scan, History, Profile"
+        - "Navigation graph with 5 destinations"
+        - "Deep linking support"
+      technical_notes:
+        - "Use Jetpack Navigation Compose"
+        - "Splash screen logo: Teal gradient + 'Trusted Glow' tagline"
+      blockers: []
+
+    # EPIC 6: POPIA Compliance & Security (Foundation Stories)
+    - id: "6.1"
+      title: "SQLCipher Database Encryption"
+      epic: "Epic 6: POPIA Compliance & Security"
+      status: "TODO"
+      assignee: "Amelia (Dev Agent)"
+      priority: "HIGH"
+      complexity: "MEDIUM"
+      estimated_days: 1-2
+      depends_on: ["1.1"]
+      acceptance_criteria:
+        - "SQLCipher 4.6.0+ integrated"
+        - "Database passphrase generated via Android KeyStore (hardware-backed)"
+        - "Passphrase stored in EncryptedSharedPreferences (AES-256-GCM)"
+        - "Room DB uses SupportFactory with SQLCipher"
+        - "Database file encrypted (unreadable without passphrase)"
+        - "Test: PRAGMA cipher_version query succeeds"
+      technical_notes:
+        - "Implement core/security/EncryptionManager.kt"
+        - "CRITICAL: POPIA Section 19 requirement"
+      blockers: []
+
+    - id: "6.3"
+      title: "Face Image Privacy - No Persistence, No Transmission"
+      epic: "Epic 6: POPIA Compliance & Security"
+      status: "TODO"
+      assignee: "Amelia (Dev Agent)"
+      priority: "HIGH"
+      complexity: "LOW"
+      estimated_days: 0.5
+      depends_on: ["1.1"]
+      acceptance_criteria:
+        - "Captured Bitmap stored ONLY in ViewModel state (RAM)"
+        - "Image NEVER written to disk (no cache, no storage)"
+        - "After analysis, Bitmap cleared (set null, recycle())"
+        - "Only ScanResult entity (scores) saved to Room"
+        - "NO face embeddings in database"
+        - "NO network transmission code for images"
+        - "Code review + validation test"
+      technical_notes:
+        - "Review all camera and ML code paths"
+        - "Add lint rule to prevent File.writeBytes() in scan flow"
+        - "CRITICAL: POPIA Section 26 + NFR-SEC01"
+      blockers: []
+
+    # EPIC 1: Foundation & Onboarding (Consent + Profile)
+    - id: "1.4"
+      title: "POPIA Biometric Consent Screen"
+      epic: "Epic 1: Foundation & Onboarding"
+      status: "TODO"
+      assignee: "Amelia (Dev Agent)"
+      priority: "HIGH"
+      complexity: "MEDIUM"
+      estimated_days: 1
+      depends_on: ["1.3", "6.1"]
+      acceptance_criteria:
+        - "Consent screen with placeholder text from popia-consent-text-placeholder.md"
+        - "Scrollable text with required legal notices"
+        - "Two checkboxes: 'I consent to biometric processing' + 'I understand data is stored locally'"
+        - "Primary button: 'I Agree & Continue' (enabled only if both checked)"
+        - "Secondary link: 'Learn More About Privacy' → Info screen"
+        - "Tertiary link: 'I Do Not Agree' → Exit with explanation"
+        - "Consent status saved to Proto DataStore (biometricConsentGiven: true)"
+        - "Consent timestamp + version logged"
+      technical_notes:
+        - "Use placeholder text: /home/goraai/SkinScanSA/docs/popia-consent-text-placeholder.md"
+        - "Implement data/datastore/UserConsentDataStore.kt"
+        - "Add audit logging (Story 6.4 will expand this)"
+      blockers: []
+
+    # EPIC 2: Face Scan & Skin Analysis (Camera Setup)
+    - id: "2.1"
+      title: "Camera Permission & Access"
+      epic: "Epic 2: Face Scan & Skin Analysis"
+      status: "TODO"
+      assignee: "Amelia (Dev Agent)"
+      priority: "MEDIUM"
+      complexity: "LOW"
+      estimated_days: 0.5
+      depends_on: ["1.4"]
+      acceptance_criteria:
+        - "AndroidManifest.xml: CAMERA permission declared"
+        - "Permission request on first camera access"
+        - "Runtime permission check with Accompanist Permissions"
+        - "Permission denied → Show rationale dialog"
+        - "Persistent denial → Show 'Open Settings' dialog"
+      technical_notes:
+        - "Use Accompanist Permissions library"
+        - "Standard Android permission flow"
+      blockers: []
+
+    - id: "2.2"
+      title: "Face Scan Camera Screen with Guidance Overlay"
+      epic: "Epic 2: Face Scan & Skin Analysis"
+      status: "TODO"
+      assignee: "Amelia (Dev Agent)"
+      priority: "MEDIUM"
+      complexity: "MEDIUM"
+      estimated_days: 1-2
+      depends_on: ["2.1", "1.2", "1.3"]
+      acceptance_criteria:
+        - "CameraX preview with front-facing camera"
+        - "Custom Canvas oval overlay (semi-transparent green)"
+        - "Instructional text: 'Align your face within the oval'"
+        - "Capture button at bottom center (circular, coral accent color)"
+        - "Camera preview aspect ratio: 9:16"
+        - "Preview updates at 30 fps (smooth)"
+        - "Capture button tap → Take photo (no ML yet, just capture)"
+        - "After capture → Show captured image with 'Retake' / 'Analyze' buttons"
+      technical_notes:
+        - "Use CameraX library (androidx.camera:camera-camera2)"
+        - "Oval overlay drawn with Canvas in AndroidView"
+        - "No face detection in Sprint 1 (Story 2.3 in Sprint 2)"
+        - "Captured image stored in ViewModel state (temporary)"
+      blockers: []
+
+  sprint_summary:
+    total_stories: 8
+    story_ids: ["1.1", "1.2", "1.3", "6.1", "6.3", "1.4", "2.1", "2.2"]
+    completed: 0
+    in_progress: 0
+    todo: 8
+    blocked: 0
+    estimated_total_days: 9-12
+
+  risks:
+    - risk: "Story 1.1 complexity - full project scaffold may take longer"
+      mitigation: "Start immediately, allocate 3-4 days, don't skimp on CI/CD setup"
+    - risk: "Story 2.2 CameraX complexity - overlay rendering may have issues"
+      mitigation: "Reference OnDevice AI Gallery camera code patterns as guide"
+    - risk: "Story 6.1 SQLCipher - KeyStore setup varies by Android version"
+      mitigation: "Test on Samsung S22 Ultra (API 33) early"
+
+  demo_readiness:
+    demo_date: "2026-01-23"
+    demo_flow: "Launch app → Splash → Consent screen → Grant consent → Camera permission → Face scan screen with oval overlay → Capture photo → Show captured image"
+    success_criteria:
+      - "App installs and launches without crashes"
+      - "User can complete full consent flow"
+      - "Camera preview works with oval overlay"
+      - "Photo capture works"
+      - "All tests pass, CI green"
+
+# ============================================
+# SPRINT 2: FACE DETECTION + ML ANALYSIS (Planned)
+# ============================================
+sprint_2:
+  goal: "Complete Face Scan Flow - MediaPipe Face Detection + Skin Analysis ML"
+  status: "PLANNED"
+  stories_planned: ["2.3", "2.4", "2.5", "2.6", "3.1", "3.2"]
+
+# ============================================
+# SPRINT 3: PRODUCT RECOMMENDATIONS (Planned)
+# ============================================
+sprint_3:
+  goal: "Product Database + Recommendation Engine"
+  status: "PLANNED"
+  stories_planned: ["3.3", "3.4", "3.5", "3.6", "1.5"]
+
+# ============================================
+# SPRINT 4: EXPLAINABILITY + PROGRESS TRACKING (Planned)
+# ============================================
+sprint_4:
+  goal: "Gemma 3n Integration + User Profile & History"
+  status: "PLANNED"
+  stories_planned: ["5.1", "5.2", "5.3", "5.4", "5.5", "4.1", "4.2"]
+
+# ============================================
+# SPRINT 5: FINAL POLISH + SECURITY HARDENING (Planned)
+# ============================================
+sprint_5:
+  goal: "Complete MVP - Security Testing + Polish"
+  status: "PLANNED"
+  stories_planned: ["4.3", "4.4", "6.2", "6.4", "6.5", "6.6"]
+
+# ============================================
+# BLOCKERS & RISKS
+# ============================================
+current_blockers: []
+
+known_risks:
+  - risk: "MediaPipe Face Mesh integration complexity (Sprint 2)"
+    severity: "HIGH"
+    mitigation: "Reference OnDevice AI Gallery MediaPipe patterns, allocate extra time"
+
+  - risk: "Gemma 3n memory constraints (Sprint 4)"
+    severity: "HIGH"
+    mitigation: "Implement lazy loading, test on Samsung S22 Ultra early"
+
+  - risk: "Mock Clicks API data realism (Sprint 3)"
+    severity: "LOW"
+    mitigation: "Create comprehensive mock data with realistic SA store locations"
+
+# ============================================
+# TEAM & RESOURCES
+# ============================================
+team:
+  - role: "Scrum Master"
+    name: "Bob"
+    agent: "bmad:bmm:agents:sm"
+
+  - role: "Developer"
+    name: "Amelia"
+    agent: "bmad:bmm:agents:dev"
+
+  - role: "Architect"
+    name: "Winston"
+    agent: "bmad:bmm:agents:architect"
+    status: "On-call for design reviews"
+
+  - role: "QA / Test Architect"
+    name: "Murat"
+    agent: "bmad:bmm:agents:tea"
+    status: "On-call for test strategy"
+
+resources:
+  - device: "Samsung S22 Ultra (R3CT10HETMM)"
+    status: "Connected via USB-C"
+
+  - ci_cd: "GitHub Actions"
+    build_strategy: "All builds via CI (DGX Spark cannot build locally)"
+
+  - documentation:
+    - "/home/goraai/SkinScanSA/docs/skinscan-sa-prd.md"
+    - "/home/goraai/SkinScanSA/docs/ux-design-specification.md"
+    - "/home/goraai/SkinScanSA/docs/skinscan-sa-architecture.md"
+    - "/home/goraai/SkinScanSA/docs/epics.md"
+    - "/home/goraai/SkinScanSA/docs/popia-consent-text-placeholder.md"
+
+# ============================================
+# NEXT ACTIONS
+# ============================================
+next_actions:
+  - action: "Execute Story 1.1: Project Initialization & Dependencies"
+    owner: "Amelia (Dev Agent)"
+    priority: "IMMEDIATE"
+    command: "/bmad:bmm:workflows:dev-story 1.1"
+
+  - action: "After Story 1.1 complete, execute Stories 1.2, 1.3, 6.1 in parallel"
+    owner: "Amelia (Dev Agent)"
+    priority: "HIGH"
+
+  - action: "Daily standup check: Review sprint-status.yaml progress"
+    owner: "Bob (Scrum Master)"
+    frequency: "Daily"
+
+# ============================================
+# CHANGE LOG
+# ============================================
+change_log:
+  - date: "2026-01-09"
+    author: "Bob (Scrum Master)"
+    change: "Sprint 1 planning complete - 8 stories selected for Walking Skeleton"
+    stories_added: ["1.1", "1.2", "1.3", "6.1", "6.3", "1.4", "2.1", "2.2"]
