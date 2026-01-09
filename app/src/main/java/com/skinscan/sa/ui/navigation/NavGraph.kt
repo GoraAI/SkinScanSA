@@ -8,7 +8,7 @@ import com.skinscan.sa.ui.screens.OnboardingScreen
 import com.skinscan.sa.ui.screens.SplashScreen
 
 /**
- * Main navigation graph for SkinScan SA
+ * Main navigation graph for Glow Guide
  *
  * Routes:
  * - splash → onboarding → popia_consent → profile_setup → home

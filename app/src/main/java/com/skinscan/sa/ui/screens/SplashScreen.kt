@@ -65,14 +65,14 @@ fun SplashScreen(
             // App logo placeholder (using Face icon for MVP)
             Icon(
                 imageVector = Icons.Default.Face,
-                contentDescription = "SkinScan SA Logo",
+                contentDescription = "Glow Guide Logo",
                 modifier = Modifier.size(120.dp),
                 tint = Color.White
             )
 
             // App name
             Text(
-                text = "SkinScan SA",
+                text = "Glow Guide",
                 style = MaterialTheme.typography.displayLarge,
                 color = Color.White,
                 textAlign = TextAlign.Center

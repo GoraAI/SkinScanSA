@@ -28,7 +28,7 @@ fun OnboardingScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Welcome to SkinScan SA",
+            text = "Welcome to Glow Guide",
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.primary
         )
