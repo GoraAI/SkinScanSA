@@ -1,5 +1,6 @@
 package com.skinscan.sa
 
+import androidx.compose.ui.graphics.Color
 import com.skinscan.sa.ui.theme.*
 import org.junit.Test
 import org.junit.Assert.*
@@ -10,27 +11,27 @@ import org.junit.Assert.*
 class ThemeTest {
     @Test
     fun `primary color is Teal 600`() {
-        assertEquals(0xFF00897B.toULong(), Teal600.value)
+        assertEquals(Color(0xFF00897B), Teal600)
     }
 
     @Test
     fun `secondary color is Deep Purple 700`() {
-        assertEquals(0xFF512DA8.toULong(), DeepPurple700.value)
+        assertEquals(Color(0xFF512DA8), DeepPurple700)
     }
 
     @Test
     fun `accent color is Coral 400`() {
-        assertEquals(0xFFFF7043.toULong(), Coral400.value)
+        assertEquals(Color(0xFFFF7043), Coral400)
     }
 
     @Test
     fun `success color is Green 600`() {
-        assertEquals(0xFF43A047.toULong(), Green600.value)
+        assertEquals(Color(0xFF43A047), Green600)
     }
 
     @Test
     fun `error color is Red 600`() {
-        assertEquals(0xFFE53935.toULong(), Red600.value)
+        assertEquals(Color(0xFFE53935), Red600)
     }
 
     @Test
