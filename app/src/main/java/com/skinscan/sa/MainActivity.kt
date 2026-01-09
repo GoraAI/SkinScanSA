@@ -26,7 +26,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            SkinScanSATheme {
+            SkinScanSATheme(
+                darkTheme = false,  // Force light theme to verify colors
+                dynamicColor = false  // Disable dynamic color to show our theme
+            ) {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Column(
                         modifier = Modifier
