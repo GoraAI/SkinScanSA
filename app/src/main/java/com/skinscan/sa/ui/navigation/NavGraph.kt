@@ -7,6 +7,8 @@ import androidx.navigation.compose.composable
 import com.skinscan.sa.ui.screens.OnboardingScreen
 import com.skinscan.sa.ui.screens.PopiaConsentScreen
 import com.skinscan.sa.ui.screens.SplashScreen
+import com.skinscan.sa.ui.screens.home.HomeScreen
+import com.skinscan.sa.ui.screens.scan.ScanScreen
 
 /**
  * Main navigation graph for Glow Guide
@@ -69,7 +71,8 @@ fun SkinScanNavGraph(
         composable(Routes.POPIA_CONSENT) {
             PopiaConsentScreen(
                 onNavigateToProfileSetup = {
-                    navController.navigate(Routes.PROFILE_SETUP) {
+                    // For Sprint 1: Skip profile setup, go straight to home
+                    navController.navigate(Routes.HOME) {
                         popUpTo(Routes.SPLASH) { inclusive = true }
                     }
                 },
@@ -79,8 +82,23 @@ fun SkinScanNavGraph(
             )
         }
 
+        composable(Routes.HOME) {
+            HomeScreen(
+                onNavigateToScan = {
+                    navController.navigate(Routes.SCAN)
+                }
+            )
+        }
+
+        composable(Routes.SCAN) {
+            ScanScreen(
+                onNavigateToHome = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         // TODO Story 1.5: Implement profile setup screen
-        // TODO Story 2.x: Implement home screen
         // TODO Story 3.x: Implement scan screens
         // TODO Story 4.x: Implement results screens
         // TODO Story 5.x: Implement history screens
