@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.skinscan.sa.ui.screens.OnboardingScreen
+import com.skinscan.sa.ui.screens.PopiaConsentScreen
 import com.skinscan.sa.ui.screens.SplashScreen
 
 /**
@@ -65,7 +66,20 @@ fun SkinScanNavGraph(
             )
         }
 
-        // TODO Story 1.4: Implement POPIA consent screen
+        composable(Routes.POPIA_CONSENT) {
+            PopiaConsentScreen(
+                onNavigateToProfileSetup = {
+                    navController.navigate(Routes.PROFILE_SETUP) {
+                        popUpTo(Routes.SPLASH) { inclusive = true }
+                    }
+                },
+                onExitApp = {
+                    // TODO: Exit app
+                }
+            )
+        }
+
+        // TODO Story 1.5: Implement profile setup screen
         // TODO Story 2.x: Implement home screen
         // TODO Story 3.x: Implement scan screens
         // TODO Story 4.x: Implement results screens
