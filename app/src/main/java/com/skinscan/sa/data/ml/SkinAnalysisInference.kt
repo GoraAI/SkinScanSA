@@ -4,14 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
-import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.gpu.CompatibilityList
-import org.tensorflow.lite.gpu.GpuDelegate
-import java.io.FileInputStream
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.nio.MappedByteBuffer
-import java.nio.channels.FileChannel
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,16 +11,14 @@ import javax.inject.Singleton
  * Skin Analysis Inference using LiteRT (TensorFlow Lite)
  *
  * Story 2.4: Skin Analysis with Loading Feedback
- * - Runs EfficientNet-Lite skin analysis model
  * - Detects skin concerns: hyperpigmentation, acne, dryness, oiliness, wrinkles
  * - Estimates Fitzpatrick skin type (I-VI)
  * - Zone-based analysis for 5 face regions
  *
- * Model inputs: 224x224 RGB image (normalized 0-1)
- * Model outputs:
- *   - skin_concerns: [batch, 5] (confidence scores for each concern)
- *   - fitzpatrick_type: [batch, 6] (probability for types I-VI)
- *   - zone_analysis: [batch, 5, 5] (5 zones x 5 concerns)
+ * Note: For MVP, uses mock results. Real TFLite integration pending model file.
+ * When model is ready:
+ * - Model inputs: 224x224 RGB image (normalized 0-1)
+ * - Model outputs: skin_concerns, fitzpatrick_type, zone_analysis
  */
 @Singleton
 class SkinAnalysisInference @Inject constructor(
@@ -36,16 +26,9 @@ class SkinAnalysisInference @Inject constructor(
 ) {
     companion object {
         private const val TAG = "SkinAnalysisInference"
-        private const val MODEL_NAME = "skin_analysis_model.tflite"
-        private const val INPUT_SIZE = 224
-        private const val PIXEL_SIZE = 3 // RGB
-        private const val NUM_CONCERNS = 5
-        private const val NUM_FITZPATRICK_TYPES = 6
-        private const val NUM_ZONES = 5
     }
 
-    private var interpreter: Interpreter? = null
-    private var gpuDelegate: GpuDelegate? = null
+    private var isInitialized = false
 
     /**
      * Skin concern types detected by the model
@@ -82,38 +65,13 @@ class SkinAnalysisInference @Inject constructor(
     )
 
     /**
-     * Initialize the TFLite interpreter with GPU acceleration if available
+     * Initialize the inference engine
+     * For MVP, always returns true as we use mock results
      */
     fun initialize(): Boolean {
-        return try {
-            val compatList = CompatibilityList()
-
-            val options = Interpreter.Options().apply {
-                if (compatList.isDelegateSupportedOnThisDevice) {
-                    gpuDelegate = GpuDelegate(compatList.bestOptionsForThisDevice)
-                    addDelegate(gpuDelegate)
-                    Log.d(TAG, "GPU acceleration enabled")
-                } else {
-                    setNumThreads(4)
-                    Log.d(TAG, "Using CPU with 4 threads")
-                }
-            }
-
-            // For MVP, use mock model since we don't have the actual .tflite yet
-            // In production, load from assets
-            interpreter = try {
-                val modelBuffer = loadModelFile(MODEL_NAME)
-                Interpreter(modelBuffer, options)
-            } catch (e: Exception) {
-                Log.w(TAG, "Model file not found, using mock inference", e)
-                null
-            }
-
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize interpreter", e)
-            false
-        }
+        isInitialized = true
+        Log.d(TAG, "Skin analysis inference initialized (MVP mode)")
+        return true
     }
 
     /**
@@ -123,119 +81,15 @@ class SkinAnalysisInference @Inject constructor(
      * @return SkinAnalysisResult with all analysis data
      */
     fun analyze(bitmap: Bitmap): SkinAnalysisResult {
-        // If model not loaded, return mock results for MVP
-        if (interpreter == null) {
-            return generateMockResults()
-        }
-
-        val inputBuffer = preprocessImage(bitmap)
-        val outputs = runInference(inputBuffer)
-        return postprocessOutputs(outputs)
-    }
-
-    /**
-     * Preprocess image for model input
-     * Resize to 224x224, normalize to 0-1, convert to ByteBuffer
-     */
-    private fun preprocessImage(bitmap: Bitmap): ByteBuffer {
-        val resizedBitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, true)
-
-        val byteBuffer = ByteBuffer.allocateDirect(4 * INPUT_SIZE * INPUT_SIZE * PIXEL_SIZE)
-        byteBuffer.order(ByteOrder.nativeOrder())
-
-        val pixels = IntArray(INPUT_SIZE * INPUT_SIZE)
-        resizedBitmap.getPixels(pixels, 0, INPUT_SIZE, 0, 0, INPUT_SIZE, INPUT_SIZE)
-
-        for (pixel in pixels) {
-            // Extract RGB and normalize to 0-1
-            val r = ((pixel shr 16) and 0xFF) / 255.0f
-            val g = ((pixel shr 8) and 0xFF) / 255.0f
-            val b = (pixel and 0xFF) / 255.0f
-
-            byteBuffer.putFloat(r)
-            byteBuffer.putFloat(g)
-            byteBuffer.putFloat(b)
-        }
-
-        if (resizedBitmap != bitmap) {
-            resizedBitmap.recycle()
-        }
-
-        return byteBuffer
-    }
-
-    /**
-     * Run TFLite inference
-     */
-    private fun runInference(inputBuffer: ByteBuffer): InferenceOutputs {
-        val concernsOutput = Array(1) { FloatArray(NUM_CONCERNS) }
-        val fitzpatrickOutput = Array(1) { FloatArray(NUM_FITZPATRICK_TYPES) }
-        val zoneOutput = Array(1) { Array(NUM_ZONES) { FloatArray(NUM_CONCERNS) } }
-
-        val outputs = mapOf(
-            0 to concernsOutput,
-            1 to fitzpatrickOutput,
-            2 to zoneOutput
-        )
-
-        interpreter?.runForMultipleInputsOutputs(arrayOf(inputBuffer), outputs)
-
-        return InferenceOutputs(
-            concerns = concernsOutput[0],
-            fitzpatrick = fitzpatrickOutput[0],
-            zones = zoneOutput[0]
-        )
-    }
-
-    private data class InferenceOutputs(
-        val concerns: FloatArray,
-        val fitzpatrick: FloatArray,
-        val zones: Array<FloatArray>
-    )
-
-    /**
-     * Convert raw outputs to structured result
-     */
-    private fun postprocessOutputs(outputs: InferenceOutputs): SkinAnalysisResult {
-        // Map concern scores
-        val overallConcerns = SkinConcern.entries.mapIndexed { index, concern ->
-            concern to outputs.concerns.getOrElse(index) { 0f }
-        }.toMap()
-
-        // Find Fitzpatrick type (highest probability)
-        val fitzpatrickIndex = outputs.fitzpatrick.indices.maxByOrNull {
-            outputs.fitzpatrick[it]
-        } ?: 0
-        val fitzpatrickType = fitzpatrickIndex + 1 // Types are 1-6
-        val fitzpatrickConfidence = outputs.fitzpatrick[fitzpatrickIndex]
-
-        // Map zone analysis
-        val zoneAnalysis = FaceZone.entries.mapIndexed { zoneIndex, zone ->
-            val zoneConcerns = SkinConcern.entries.mapIndexed { concernIndex, concern ->
-                concern to outputs.zones.getOrElse(zoneIndex) { FloatArray(NUM_CONCERNS) }
-                    .getOrElse(concernIndex) { 0f }
-            }.toMap()
-            zone to zoneConcerns
-        }.toMap()
-
-        // Find primary concerns (score > 0.4)
-        val primaryConcerns = overallConcerns
-            .filter { it.value > 0.4f }
-            .toList()
-            .sortedByDescending { it.second }
-            .map { it.first }
-
-        return SkinAnalysisResult(
-            overallConcerns = overallConcerns,
-            fitzpatrickType = fitzpatrickType,
-            fitzpatrickConfidence = fitzpatrickConfidence,
-            zoneAnalysis = zoneAnalysis,
-            primaryConcerns = primaryConcerns
-        )
+        Log.d(TAG, "Analyzing face image (${bitmap.width}x${bitmap.height})")
+        // For MVP, return mock results
+        // Real inference will be added when model file is available
+        return generateMockResults()
     }
 
     /**
      * Generate mock results for MVP (before real model is available)
+     * Returns realistic-looking data for South African skin types
      */
     private fun generateMockResults(): SkinAnalysisResult {
         Log.d(TAG, "Generating mock analysis results")
@@ -288,7 +142,7 @@ class SkinAnalysisInference @Inject constructor(
 
         return SkinAnalysisResult(
             overallConcerns = overallConcerns,
-            fitzpatrickType = 5, // Fitzpatrick V (brown skin)
+            fitzpatrickType = 5, // Fitzpatrick V (brown skin) - common in SA
             fitzpatrickConfidence = 0.89f,
             zoneAnalysis = zoneAnalysis,
             primaryConcerns = listOf(SkinConcern.HYPERPIGMENTATION, SkinConcern.DRYNESS)
@@ -296,24 +150,10 @@ class SkinAnalysisInference @Inject constructor(
     }
 
     /**
-     * Load TFLite model from assets
-     */
-    private fun loadModelFile(modelName: String): MappedByteBuffer {
-        val fileDescriptor = context.assets.openFd(modelName)
-        val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
-        val fileChannel = inputStream.channel
-        val startOffset = fileDescriptor.startOffset
-        val declaredLength = fileDescriptor.declaredLength
-        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
-    }
-
-    /**
      * Release resources
      */
     fun close() {
-        interpreter?.close()
-        interpreter = null
-        gpuDelegate?.close()
-        gpuDelegate = null
+        isInitialized = false
+        Log.d(TAG, "Skin analysis inference closed")
     }
 }
