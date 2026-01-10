@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.skinscan.sa.data.db.AppDatabase
+import com.skinscan.sa.data.db.dao.ConsentAuditLogDao
 import com.skinscan.sa.data.db.dao.ProductDao
 import com.skinscan.sa.data.db.dao.ScanResultDao
 import com.skinscan.sa.data.db.dao.UserProfileDao
@@ -116,5 +117,11 @@ object DatabaseModule {
     @Singleton
     fun provideProductDao(database: AppDatabase): ProductDao {
         return database.productDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideConsentAuditLogDao(database: AppDatabase): ConsentAuditLogDao {
+        return database.consentAuditLogDao()
     }
 }

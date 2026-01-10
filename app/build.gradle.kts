@@ -112,6 +112,10 @@ dependencies {
     // Accompanist
     implementation(libs.accompanist.permissions)
 
+    // OkHttp (Story 6.2 - Certificate Pinning)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Configuration (Story 6.2)
+
+    Security settings:
+    - Cleartext (HTTP) traffic completely disabled
+    - Certificate pinning infrastructure for future API integration
+    - Standard CA validation for model downloads from Hugging Face
+
+    POPIA Compliance: NFR-SEC04 (Certificate Pinning)
+-->
+<network-security-config>
+    <!-- Base config: No cleartext traffic allowed anywhere -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Future Clicks API integration - pins to be added when API is available -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.clicks.co.za</domain>
+        <!--
+            Certificate pinning pins will be added here when Clicks API credentials are obtained.
+            For MVP with mock data, infrastructure is ready but pins are not configured.
+
+            To obtain pins when API is available:
+            echo | openssl s_client -servername api.clicks.co.za -connect api.clicks.co.za:443 2>/dev/null \
+                | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64
+
+            <pin-set expiration="2027-12-31">
+                <pin digest="SHA-256">PRIMARY_CERTIFICATE_PIN_HERE=</pin>
+                <pin digest="SHA-256">BACKUP_CERTIFICATE_PIN_HERE=</pin>
+            </pin-set>
+        -->
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Hugging Face - Model downloads with standard CA validation -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">huggingface.co</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Debug builds can use user-installed certificates for testing -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="user" />
+            <certificates src="system" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

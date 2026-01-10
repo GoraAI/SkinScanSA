@@ -38,6 +38,9 @@ camerax = "1.4.1"
 # Accompanist
 accompanist = "0.36.0"
 
+# OkHttp
+okhttp = "4.12.0"
+
 # Testing
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -96,6 +99,10 @@ androidx-camera-view = { group = "androidx.camera", name = "camera-view", versio
 
 # Accompanist
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
+
+# OkHttp
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }

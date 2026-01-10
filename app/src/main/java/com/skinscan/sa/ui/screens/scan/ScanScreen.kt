@@ -1,6 +1,7 @@
 package com.skinscan.sa.ui.screens.scan
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -9,6 +10,7 @@ import android.net.Uri
 import android.provider.Settings
 import android.util.Log
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -78,7 +80,7 @@ import java.util.concurrent.Executors
 private const val TAG = "ScanScreen"
 
 /**
- * Scan Screen with Camera Permission Handling (Story 2.1 + 2.2)
+ * Scan Screen with Camera Permission Handling (Story 2.1 + 2.2 + 6.3)
  *
  * Story 2.1: Camera permission flow
  * - Permission rationale dialog
@@ -90,6 +92,10 @@ private const val TAG = "ScanScreen"
  * - Oval face guide overlay
  * - Capture button
  * - Retake/Analyze flow
+ *
+ * Story 6.3: Face Image Privacy
+ * - FLAG_SECURE prevents screenshots
+ * - Image stored in RAM only (not disk)
  */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -102,6 +108,18 @@ fun ScanScreen(
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
     var showRationaleDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+
+    // Story 6.3: Prevent screenshots of camera screen (POPIA compliance)
+    DisposableEffect(Unit) {
+        val window = (context as? Activity)?.window
+        window?.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
+        onDispose {
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+    }
 
     // Observe ViewModel state
     val isAnalyzing by viewModel.isAnalyzing.collectAsState()
