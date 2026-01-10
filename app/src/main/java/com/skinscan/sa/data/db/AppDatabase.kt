@@ -18,6 +18,8 @@ import com.skinscan.sa.data.db.entity.UserProfileEntity
  * Contains biometric data (facial scan results) requiring encryption
  *
  * Story 3.1: Added ProductEntity for product catalog
+ * Story 4.1: Added isStarred and healthScore fields to ScanResultEntity
+ * Story 4.4: Added profile fields to UserProfileEntity
  */
 @Database(
     entities = [
@@ -25,7 +27,7 @@ import com.skinscan.sa.data.db.entity.UserProfileEntity
         UserProfileEntity::class,
         ProductEntity::class
     ],
-    version = 2,
+    version = 4,
     exportSchema = false // TODO: Enable schema export for production
 )
 @TypeConverters(DateConverters::class)

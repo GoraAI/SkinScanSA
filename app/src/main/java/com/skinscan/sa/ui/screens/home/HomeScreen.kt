@@ -2,11 +2,14 @@ package com.skinscan.sa.ui.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,14 +17,15 @@ import androidx.compose.ui.Modifier
 import com.skinscan.sa.ui.theme.Spacing
 
 /**
- * Home Screen placeholder (Story 2.1)
+ * Home Screen (Story 2.1, Story 4.1, Story 4.4)
  *
- * Full implementation in future stories
- * For Sprint 1: Just "Start Your First Scan" button to trigger camera permission flow
+ * Main landing screen with scan, history, and profile navigation
  */
 @Composable
 fun HomeScreen(
-    onNavigateToScan: () -> Unit
+    onNavigateToScan: () -> Unit,
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -46,7 +50,25 @@ fun HomeScreen(
             onClick = onNavigateToScan,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Start Your First Scan")
+            Text("Start Skin Scan")
+        }
+
+        Spacer(modifier = Modifier.height(Spacing.m))
+
+        OutlinedButton(
+            onClick = onNavigateToHistory,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("View Scan History")
+        }
+
+        Spacer(modifier = Modifier.height(Spacing.s))
+
+        OutlinedButton(
+            onClick = onNavigateToProfile,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Profile Settings")
         }
     }
 }

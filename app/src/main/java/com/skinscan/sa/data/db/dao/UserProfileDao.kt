@@ -24,4 +24,8 @@ interface UserProfileDao {
 
     @Query("SELECT * FROM user_profile LIMIT 1")
     suspend fun getProfileOnce(): UserProfileEntity?
+
+    // Story 4.4: Delete all user data (POPIA right to deletion)
+    @Query("DELETE FROM user_profile")
+    suspend fun deleteAll()
 }

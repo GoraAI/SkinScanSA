@@ -9,7 +9,11 @@ import androidx.navigation.navArgument
 import com.skinscan.sa.ui.screens.OnboardingScreen
 import com.skinscan.sa.ui.screens.PopiaConsentScreen
 import com.skinscan.sa.ui.screens.SplashScreen
+import com.skinscan.sa.ui.screens.history.ComparisonScreen
+import com.skinscan.sa.ui.screens.history.HistoryScreen
+import com.skinscan.sa.ui.screens.history.TimelineScreen
 import com.skinscan.sa.ui.screens.home.HomeScreen
+import com.skinscan.sa.ui.screens.profile.ProfileScreen
 import com.skinscan.sa.ui.screens.recommendations.RecommendationsScreen
 import com.skinscan.sa.ui.screens.results.ResultsScreen
 import com.skinscan.sa.ui.screens.scan.ScanScreen
@@ -25,6 +29,7 @@ import com.skinscan.sa.ui.screens.scan.ScanScreen
  *
  * Sprint 2: Added results/{scanId} route
  * Sprint 3: Added recommendations/{scanId} route
+ * Sprint 4: Added history route
  */
 
 // Navigation route constants
@@ -41,10 +46,13 @@ object Routes {
     const val SCAN_DETAIL = "scan_detail/{scanId}"
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
+    const val COMPARISON = "comparison/{baselineScanId}/{currentScanId}"
+    const val TIMELINE = "timeline"
 
     fun results(scanId: String) = "results/$scanId"
     fun recommendations(scanId: String) = "recommendations/$scanId"
     fun scanDetail(scanId: String) = "scan_detail/$scanId"
+    fun comparison(baselineScanId: String, currentScanId: String) = "comparison/$baselineScanId/$currentScanId"
 }
 
 @Composable
@@ -97,6 +105,12 @@ fun SkinScanNavGraph(
             HomeScreen(
                 onNavigateToScan = {
                     navController.navigate(Routes.SCAN)
+                },
+                onNavigateToHistory = {
+                    navController.navigate(Routes.HISTORY)
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Routes.PROFILE)
                 }
             )
         }
@@ -141,7 +155,53 @@ fun SkinScanNavGraph(
             )
         }
 
+        composable(Routes.HISTORY) {
+            HistoryScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToResults = { scanId ->
+                    navController.navigate(Routes.results(scanId))
+                }
+            )
+        }
+
+        composable(
+            route = Routes.COMPARISON,
+            arguments = listOf(
+                navArgument("baselineScanId") { type = NavType.StringType },
+                navArgument("currentScanId") { type = NavType.StringType }
+            )
+        ) {
+            ComparisonScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.TIMELINE) {
+            TimelineScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.PROFILE) {
+            ProfileScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onDataDeleted = {
+                    // Navigate back to splash after data deletion
+                    navController.navigate(Routes.SPLASH) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         // TODO Story 1.5: Implement profile setup screen
-        // TODO Story 4.x: Implement history screens
     }
 }

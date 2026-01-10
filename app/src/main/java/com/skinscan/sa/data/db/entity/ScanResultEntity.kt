@@ -50,5 +50,11 @@ data class ScanResultEntity(
 
     // Analysis metadata
     val analysisVersion: String = "1.0.0",
-    val modelVersion: String = "mock-v1"
+    val modelVersion: String = "mock-v1",
+
+    // Story 4.1: User bookmarking
+    val isStarred: Boolean = false,
+
+    // Story 4.3: Overall skin health score (0-100)
+    val healthScore: Int? = null
 )
