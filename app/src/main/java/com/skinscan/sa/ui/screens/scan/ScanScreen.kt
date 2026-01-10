@@ -71,7 +71,10 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
-import com.skinscan.sa.ui.theme.*
+import com.skinscan.sa.ui.theme.Coral400
+import com.skinscan.sa.ui.theme.Green600
+import com.skinscan.sa.ui.theme.Spacing
+import com.skinscan.sa.ui.theme.Teal600
 import java.util.concurrent.Executors
 
 private const val TAG = "ScanScreen"
@@ -144,32 +147,22 @@ fun ScanScreen(
     if (showRationaleDialog) {
         AlertDialog(
             onDismissRequest = { showRationaleDialog = false },
-            containerColor = SurfaceDark2,
             icon = {
                 Icon(
                     imageVector = Icons.Default.CameraAlt,
                     contentDescription = "Camera",
-                    tint = RoseGold
+                    tint = MaterialTheme.colorScheme.primary
                 )
             },
-            title = { Text("Camera Access Needed", color = TextWhite) },
+            title = { Text("Camera Access Needed") },
             text = {
-                Text(
-                    "Glow Guide needs camera access to capture your face for skin analysis. Your image is processed on your device and never uploaded.",
-                    color = TextSecondary
-                )
+                Text("Glow Guide needs camera access to capture your face for skin analysis. Your image is processed on your device and never uploaded.")
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        showRationaleDialog = false
-                        cameraPermissionState.launchPermissionRequest()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = RoseGold,
-                        contentColor = DarkBackground
-                    )
-                ) {
+                Button(onClick = {
+                    showRationaleDialog = false
+                    cameraPermissionState.launchPermissionRequest()
+                }) {
                     Text("Grant Access")
                 }
             },
@@ -178,7 +171,7 @@ fun ScanScreen(
                     showRationaleDialog = false
                     onNavigateToHome()
                 }) {
-                    Text("Not Now", color = TextSecondary)
+                    Text("Not Now")
                 }
             }
         )
@@ -188,28 +181,18 @@ fun ScanScreen(
     if (showSettingsDialog) {
         AlertDialog(
             onDismissRequest = { showSettingsDialog = false },
-            containerColor = SurfaceDark2,
-            title = { Text("Camera Permission Denied", color = TextWhite) },
+            title = { Text("Camera Permission Denied") },
             text = {
-                Text(
-                    "Please enable camera access in Settings > Apps > Glow Guide > Permissions",
-                    color = TextSecondary
-                )
+                Text("Please enable camera access in Settings > Apps > Glow Guide > Permissions")
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.fromParts("package", context.packageName, null)
-                        }
-                        context.startActivity(intent)
-                        showSettingsDialog = false
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = RoseGold,
-                        contentColor = DarkBackground
-                    )
-                ) {
+                Button(onClick = {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                    showSettingsDialog = false
+                }) {
                     Text("Open Settings")
                 }
             },
@@ -218,7 +201,7 @@ fun ScanScreen(
                     showSettingsDialog = false
                     onNavigateToHome()
                 }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text("Cancel")
                 }
             }
         )
@@ -232,54 +215,43 @@ fun ScanScreen(
             onBack = onNavigateToHome
         )
     } else {
-        // Permission denied state with Glow Guide styling
-        Box(
+        // Permission denied state
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkBackground)
+                .padding(Spacing.l),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(Spacing.l),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            Icon(
+                imageVector = Icons.Default.CameraAlt,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(Spacing.m))
+            Text(
+                text = "Camera access is required for face scanning",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(Spacing.l))
+            Button(
+                onClick = {
+                    if (cameraPermissionState.status.shouldShowRationale) {
+                        showRationaleDialog = true
+                    } else {
+                        showSettingsDialog = true
+                    }
+                }
             ) {
-                Icon(
-                    imageVector = Icons.Default.CameraAlt,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = RoseGold
-                )
-                Spacer(modifier = Modifier.height(Spacing.m))
-                Text(
-                    text = "Camera access is required for face scanning",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = TextWhite,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(Spacing.l))
-                Button(
-                    onClick = {
-                        if (cameraPermissionState.status.shouldShowRationale) {
-                            showRationaleDialog = true
-                        } else {
-                            showSettingsDialog = true
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = RoseGold,
-                        contentColor = DarkBackground
-                    )
-                ) {
-                    Text("Enable Camera")
-                }
-                TextButton(
-                    onClick = onNavigateToHome,
-                    modifier = Modifier.padding(top = Spacing.s)
-                ) {
-                    Text("Return to Home", color = TextSecondary)
-                }
+                Text("Enable Camera")
+            }
+            TextButton(
+                onClick = onNavigateToHome,
+                modifier = Modifier.padding(top = Spacing.s)
+            ) {
+                Text("Return to Home")
             }
         }
     }
@@ -469,9 +441,9 @@ private fun FaceGuideOverlay() {
             blendMode = BlendMode.Clear
         )
 
-        // Draw oval border (rose gold to indicate alignment area)
+        // Draw oval border (green/teal to indicate alignment area)
         drawOval(
-            color = RoseGold,
+            color = Green600,
             topLeft = Offset(ovalLeft, ovalTop),
             size = Size(ovalWidth, ovalHeight),
             style = Stroke(width = 4.dp.toPx())
@@ -537,7 +509,7 @@ private fun InstructionText() {
 }
 
 /**
- * Circular capture button with rose gold accent
+ * Circular capture button with coral accent
  */
 @Composable
 private fun CaptureButton(
@@ -549,18 +521,14 @@ private fun CaptureButton(
         modifier = modifier.size(72.dp),
         shape = CircleShape,
         colors = ButtonDefaults.buttonColors(
-            containerColor = RoseGold
-        ),
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 8.dp,
-            pressedElevation = 4.dp
+            containerColor = Coral400
         )
     ) {
         Icon(
             imageVector = Icons.Default.CameraAlt,
             contentDescription = "Capture",
             modifier = Modifier.size(32.dp),
-            tint = DarkBackground
+            tint = Color.White
         )
     }
 }
@@ -598,37 +566,37 @@ private fun ImageReviewScreen(
             onBack()
         })
 
-        // Bottom action buttons with glassmorphism style
+        // Bottom action buttons
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(GlassSurface)
+                .background(Color.Black.copy(alpha = 0.6f))
                 .padding(Spacing.l),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (isAnalyzing) {
                 CircularProgressIndicator(
-                    color = RoseGold,
+                    color = Teal600,
                     modifier = Modifier.size(48.dp)
                 )
                 Spacer(modifier = Modifier.height(Spacing.m))
                 Text(
                     text = "Analyzing your skin...",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = TextWhite
+                    color = Color.White
                 )
                 Spacer(modifier = Modifier.height(Spacing.xs))
                 Text(
                     text = "100% on-device processing",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    color = Color.White.copy(alpha = 0.7f)
                 )
             } else {
                 Text(
                     text = "Review your photo",
                     style = MaterialTheme.typography.titleMedium,
-                    color = TextWhite
+                    color = Color.White
                 )
                 Spacer(modifier = Modifier.height(Spacing.m))
                 Row(
@@ -639,7 +607,7 @@ private fun ImageReviewScreen(
                         onClick = onRetake,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = TextWhite
+                            contentColor = Color.White
                         )
                     ) {
                         Text("Retake")
@@ -648,8 +616,7 @@ private fun ImageReviewScreen(
                         onClick = onAnalyze,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = RoseGold,
-                            contentColor = DarkBackground
+                            containerColor = Teal600
                         )
                     ) {
                         Text("Analyze")
