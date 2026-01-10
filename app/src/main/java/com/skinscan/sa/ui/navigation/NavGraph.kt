@@ -10,6 +10,7 @@ import com.skinscan.sa.ui.screens.OnboardingScreen
 import com.skinscan.sa.ui.screens.PopiaConsentScreen
 import com.skinscan.sa.ui.screens.SplashScreen
 import com.skinscan.sa.ui.screens.home.HomeScreen
+import com.skinscan.sa.ui.screens.recommendations.RecommendationsScreen
 import com.skinscan.sa.ui.screens.results.ResultsScreen
 import com.skinscan.sa.ui.screens.scan.ScanScreen
 
@@ -23,6 +24,7 @@ import com.skinscan.sa.ui.screens.scan.ScanScreen
  * - home → profile → settings
  *
  * Sprint 2: Added results/{scanId} route
+ * Sprint 3: Added recommendations/{scanId} route
  */
 
 // Navigation route constants
@@ -128,8 +130,18 @@ fun SkinScanNavGraph(
             )
         }
 
+        composable(
+            route = Routes.RECOMMENDATIONS,
+            arguments = listOf(navArgument("scanId") { type = NavType.StringType })
+        ) {
+            RecommendationsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         // TODO Story 1.5: Implement profile setup screen
-        // TODO Story 3.3+: Implement recommendations screen
         // TODO Story 4.x: Implement history screens
     }
 }

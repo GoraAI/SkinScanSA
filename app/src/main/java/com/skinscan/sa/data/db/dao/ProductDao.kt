@@ -28,7 +28,10 @@ interface ProductDao {
     fun getAllProducts(): Flow<List<ProductEntity>>
 
     @Query("SELECT * FROM products WHERE category = :category ORDER BY rating DESC")
-    fun getByCategory(category: String): Flow<List<ProductEntity>>
+    fun getByCategoryFlow(category: String): Flow<List<ProductEntity>>
+
+    @Query("SELECT * FROM products WHERE category = :category ORDER BY rating DESC")
+    suspend fun getByCategory(category: String): List<ProductEntity>
 
     @Query("SELECT * FROM products WHERE inStock = 1 ORDER BY rating DESC")
     fun getInStockProducts(): Flow<List<ProductEntity>>
@@ -70,4 +73,13 @@ interface ProductDao {
 
     @Query("DELETE FROM products")
     suspend fun deleteAll()
+
+    @Query("""
+        SELECT * FROM products
+        WHERE name LIKE '%' || :query || '%'
+        OR brand LIKE '%' || :query || '%'
+        OR description LIKE '%' || :query || '%'
+        ORDER BY rating DESC
+    """)
+    suspend fun searchProducts(query: String): List<ProductEntity>
 }
