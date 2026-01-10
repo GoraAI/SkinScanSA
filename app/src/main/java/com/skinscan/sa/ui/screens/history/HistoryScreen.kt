@@ -51,7 +51,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.skinscan.sa.data.ml.SkinAnalysisInference.SkinConcern
-import com.skinscan.sa.ui.theme.*
+import com.skinscan.sa.ui.theme.Coral400
+import com.skinscan.sa.ui.theme.Green600
+import com.skinscan.sa.ui.theme.Spacing
+import com.skinscan.sa.ui.theme.Teal600
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -71,21 +74,19 @@ fun HistoryScreen(
     val selectedFilter by viewModel.selectedFilter.collectAsState()
 
     Scaffold(
-        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Scan History", color = TextWhite) },
+                title = { Text("Scan History") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = RoseGold
+                            contentDescription = "Back"
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         }
@@ -95,11 +96,10 @@ fun HistoryScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(DarkBackground)
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = RoseGold)
+                    CircularProgressIndicator(color = Teal600)
                 }
             }
 
@@ -107,15 +107,13 @@ fun HistoryScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(DarkBackground)
                         .padding(paddingValues)
                         .padding(Spacing.l),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = state.message,
-                        textAlign = TextAlign.Center,
-                        color = TextWhite
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -143,11 +141,7 @@ private fun HistoryContent(
     onStarToggled: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(DarkBackground)
-    ) {
+    Column(modifier = modifier.fillMaxSize()) {
         // Header with scan count
         Column(
             modifier = Modifier
@@ -157,7 +151,7 @@ private fun HistoryContent(
             Text(
                 text = "${state.totalCount} scans total",
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(Spacing.s))
@@ -173,12 +167,10 @@ private fun HistoryContent(
                     FilterChip(
                         selected = selectedFilter == filter,
                         onClick = { onFilterSelected(filter) },
-                        label = { Text(filter.displayName, color = if (selectedFilter == filter) DarkBackground else TextSecondary) },
+                        label = { Text(filter.displayName) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = RoseGold,
-                            selectedLabelColor = DarkBackground,
-                            containerColor = GlassSurface,
-                            labelColor = TextSecondary
+                            selectedContainerColor = Teal600,
+                            selectedLabelColor = Color.White
                         )
                     )
                 }
@@ -202,8 +194,7 @@ private fun HistoryContent(
                         else
                             "No scans found",
                         style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
-                        color = TextWhite
+                        textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(Spacing.s))
                     Text(
@@ -212,7 +203,7 @@ private fun HistoryContent(
                         else
                             "Complete a skin scan to see it here",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -255,7 +246,7 @@ private fun ScanHistoryCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor = GlassSurface
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Row(
@@ -277,8 +268,7 @@ private fun ScanHistoryCard(
                 Text(
                     text = "${dateFormat.format(scan.date)} • ${timeFormat.format(scan.date)}",
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextWhite
+                    fontWeight = FontWeight.SemiBold
                 )
 
                 Spacer(modifier = Modifier.height(Spacing.xs))
@@ -295,7 +285,7 @@ private fun ScanHistoryCard(
                     Text(
                         text = "Type ${scan.fitzpatrickType}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -324,7 +314,7 @@ private fun ScanHistoryCard(
                     Icon(
                         imageVector = if (scan.isStarred) Icons.Default.Star else Icons.Default.StarBorder,
                         contentDescription = if (scan.isStarred) "Unstar" else "Star",
-                        tint = if (scan.isStarred) Champagne else TextSecondary
+                        tint = if (scan.isStarred) Color(0xFFFFC107) else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -346,7 +336,7 @@ private fun FaceDiagramThumbnail(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(SurfaceDark2),
+            .background(MaterialTheme.colorScheme.surface),
         contentAlignment = Alignment.Center
     ) {
         // Simple face outline with concern indicators
@@ -407,9 +397,9 @@ private fun ConcernPill(concern: SkinConcern) {
 @Composable
 private fun HealthScoreBadge(score: Int) {
     val color = when {
-        score >= 70 -> TealAccent
-        score >= 50 -> WarningAmber
-        else -> ErrorRed
+        score >= 70 -> Green600
+        score >= 50 -> Color(0xFFFFA726)
+        else -> Coral400
     }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -417,7 +407,7 @@ private fun HealthScoreBadge(score: Int) {
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(color.copy(alpha = 0.15f)),
+                .background(color.copy(alpha = 0.1f)),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -430,7 +420,7 @@ private fun HealthScoreBadge(score: Int) {
         Text(
             text = "Health",
             style = MaterialTheme.typography.labelSmall,
-            color = TextSecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

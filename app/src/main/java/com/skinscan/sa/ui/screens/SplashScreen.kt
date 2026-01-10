@@ -1,6 +1,5 @@
 package com.skinscan.sa.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,7 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,19 +18,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.skinscan.sa.R
-import com.skinscan.sa.ui.theme.DarkBackground
-import com.skinscan.sa.ui.theme.RoseGold
 import com.skinscan.sa.ui.theme.Spacing
-import com.skinscan.sa.ui.theme.TealAccent
-import com.skinscan.sa.ui.theme.TextSecondary
-import com.skinscan.sa.ui.theme.TextWhite
 import kotlinx.coroutines.delay
 
 @Composable
@@ -53,51 +47,42 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground),
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF00897B), // Teal 600
+                        Color(0xFF004D40)  // Teal 900 (darker)
+                    )
+                )
+            ),
         contentAlignment = Alignment.Center
     ) {
-        // Ambient glow effects
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .size(200.dp)
-                .blur(radius = 80.dp)
-                .background(RoseGold.copy(alpha = 0.2f), CircleShape)
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .size(250.dp)
-                .blur(radius = 100.dp)
-                .background(TealAccent.copy(alpha = 0.15f), CircleShape)
-        )
-
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Spacing.m),
             modifier = Modifier.padding(Spacing.l)
         ) {
-            // Glow Guide logo
-            Image(
-                painter = painterResource(id = R.drawable.glow_guide_logo),
+            // App logo placeholder (using Face icon for MVP)
+            Icon(
+                imageVector = Icons.Default.Face,
                 contentDescription = "Glow Guide Logo",
-                modifier = Modifier.size(200.dp)
+                modifier = Modifier.size(120.dp),
+                tint = Color.White
             )
 
             // App name
             Text(
                 text = "Glow Guide",
                 style = MaterialTheme.typography.displayLarge,
-                color = RoseGold,
-                fontWeight = FontWeight.Bold,
+                color = Color.White,
                 textAlign = TextAlign.Center
             )
 
             // Tagline
             Text(
                 text = "Personalized Skincare for Your Skin Tone",
-                style = MaterialTheme.typography.titleMedium,
-                color = TextSecondary,
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White.copy(alpha = 0.9f),
                 textAlign = TextAlign.Center
             )
         }
