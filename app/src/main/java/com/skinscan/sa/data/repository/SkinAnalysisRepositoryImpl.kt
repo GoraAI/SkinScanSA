@@ -1,14 +1,22 @@
 package com.skinscan.sa.data.repository
 
 import android.graphics.Bitmap
+import android.util.Log
 import com.skinscan.sa.data.db.dao.ScanResultDao
 import com.skinscan.sa.data.db.entity.ScanResultEntity
+import com.skinscan.sa.data.ml.FaceDetectionService
+import com.skinscan.sa.data.ml.SkinAnalysisInference
 import com.skinscan.sa.domain.repository.SkinAnalysisRepository
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.Date
 import javax.inject.Inject
 
 /**
  * Implementation of SkinAnalysisRepository
+ *
+ * Story 2.3: Face Detection Integration
+ * Story 2.4: Skin Analysis with LiteRT
  *
  * PRIVACY CONTROLS (Story 6.3 - POPIA Compliance):
  * 1. NO disk persistence - Bitmap never written to file system
@@ -17,39 +25,103 @@ import javax.inject.Inject
  * 4. Only derived data saved - ScanResult entity (no image) to encrypted DB
  */
 class SkinAnalysisRepositoryImpl @Inject constructor(
-    private val scanResultDao: ScanResultDao
+    private val scanResultDao: ScanResultDao,
+    private val faceDetectionService: FaceDetectionService,
+    private val skinAnalysisInference: SkinAnalysisInference
 ) : SkinAnalysisRepository {
 
+    companion object {
+        private const val TAG = "SkinAnalysisRepo"
+    }
+
     override suspend fun analyzeFace(image: Bitmap, userId: String): ScanResultEntity {
+        Log.d(TAG, "Starting face analysis for user: $userId")
+
         try {
-            // TODO Story 2.3: Integrate MediaPipe face detection
-            // val landmarks = faceDetectionService.detect(image)
+            // Step 1: Detect face (Story 2.3)
+            val faceResult = faceDetectionService.detectFace(image)
+            if (!faceResult.faceDetected) {
+                Log.w(TAG, "No face detected: ${faceResult.validationMessage}")
+                // Return result with no concerns detected
+                return createEmptyResult(userId, "No face detected")
+            }
 
-            // TODO Story 3.1: Integrate LiteRT skin analysis model
-            // val tensor = preprocessImage(image, landmarks)
-            // val rawOutput = skinAnalysisModel.analyze(tensor)
+            // Step 2: Run skin analysis (Story 2.4)
+            val analysisResult = skinAnalysisInference.analyze(image)
 
-            // MVP: Mock analysis results for Stories 6.3, 1.4, 2.1, 2.2
-            val scanResult = ScanResultEntity(
-                userId = userId,
-                scannedAt = Date(),
-                faceImagePath = "", // CRITICAL: NO image path - image not persisted
-                detectedConcerns = """["HYPERPIGMENTATION", "DRYNESS"]""", // Mock data
-                fitzpatrickType = 5, // Mock: Fitzpatrick V
-                confidenceScores = """{"hyperpigmentation": 0.87, "dryness": 0.72}""",
-                recommendedProductIds = null // Will be populated by recommendation engine
-            )
+            // Step 3: Convert to entity and save
+            val scanResult = convertToEntity(userId, analysisResult)
 
             // Save ONLY derived data (NOT image) to encrypted database
             scanResultDao.insert(scanResult)
+            Log.d(TAG, "Analysis saved with ID: ${scanResult.scanId}")
 
             return scanResult
 
-        } finally {
-            // CRITICAL: Clear bitmap from memory after processing
-            // This ensures face image doesn't linger in RAM
-            // Note: Calling code (ViewModel) must also recycle bitmap
-            // This is defensive cleanup in case ViewModel misses it
+        } catch (e: Exception) {
+            Log.e(TAG, "Analysis failed", e)
+            throw e
         }
+    }
+
+    /**
+     * Convert ML result to database entity
+     */
+    private fun convertToEntity(
+        userId: String,
+        result: SkinAnalysisInference.SkinAnalysisResult
+    ): ScanResultEntity {
+        // Convert primary concerns to JSON array
+        val concernsArray = JSONArray()
+        result.primaryConcerns.forEach { concern ->
+            concernsArray.put(concern.name)
+        }
+
+        // Convert confidence scores to JSON object
+        val scoresObject = JSONObject()
+        result.overallConcerns.forEach { (concern, score) ->
+            scoresObject.put(concern.name, score.toDouble())
+        }
+
+        // Convert zone analysis to JSON object
+        val zoneObject = JSONObject()
+        result.zoneAnalysis.forEach { (zone, concerns) ->
+            val zoneConcerns = JSONObject()
+            concerns.forEach { (concern, score) ->
+                zoneConcerns.put(concern.name, score.toDouble())
+            }
+            zoneObject.put(zone.name, zoneConcerns)
+        }
+
+        return ScanResultEntity(
+            userId = userId,
+            scannedAt = Date(result.analysisTimestamp),
+            faceImagePath = "", // CRITICAL: No image path - privacy compliance
+            detectedConcerns = concernsArray.toString(),
+            fitzpatrickType = result.fitzpatrickType,
+            fitzpatrickConfidence = result.fitzpatrickConfidence,
+            confidenceScores = scoresObject.toString(),
+            zoneAnalysis = zoneObject.toString(),
+            recommendedProductIds = null, // Will be populated by recommendation engine
+            modelVersion = "efficientnet-lite-v1"
+        )
+    }
+
+    /**
+     * Create empty result when face not detected
+     */
+    private suspend fun createEmptyResult(userId: String, reason: String): ScanResultEntity {
+        val result = ScanResultEntity(
+            userId = userId,
+            scannedAt = Date(),
+            faceImagePath = "",
+            detectedConcerns = "[]",
+            fitzpatrickType = null,
+            confidenceScores = null,
+            zoneAnalysis = null,
+            modelVersion = "none-$reason"
+        )
+        scanResultDao.insert(result)
+        return result
     }
 }

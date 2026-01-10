@@ -4,8 +4,10 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.skinscan.sa.data.db.converters.DateConverters
+import com.skinscan.sa.data.db.dao.ProductDao
 import com.skinscan.sa.data.db.dao.ScanResultDao
 import com.skinscan.sa.data.db.dao.UserProfileDao
+import com.skinscan.sa.data.db.entity.ProductEntity
 import com.skinscan.sa.data.db.entity.ScanResultEntity
 import com.skinscan.sa.data.db.entity.UserProfileEntity
 
@@ -14,19 +16,23 @@ import com.skinscan.sa.data.db.entity.UserProfileEntity
  *
  * Encrypted with SQLCipher (AES-256-GCM) for POPIA compliance
  * Contains biometric data (facial scan results) requiring encryption
+ *
+ * Story 3.1: Added ProductEntity for product catalog
  */
 @Database(
     entities = [
         ScanResultEntity::class,
-        UserProfileEntity::class
+        UserProfileEntity::class,
+        ProductEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false // TODO: Enable schema export for production
 )
 @TypeConverters(DateConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun scanResultDao(): ScanResultDao
     abstract fun userProfileDao(): UserProfileDao
+    abstract fun productDao(): ProductDao
 
     companion object {
         const val DATABASE_NAME = "glowguide.db"

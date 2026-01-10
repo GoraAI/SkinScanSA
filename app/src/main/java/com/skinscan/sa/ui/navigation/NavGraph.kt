@@ -2,12 +2,15 @@ package com.skinscan.sa.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.skinscan.sa.ui.screens.OnboardingScreen
 import com.skinscan.sa.ui.screens.PopiaConsentScreen
 import com.skinscan.sa.ui.screens.SplashScreen
 import com.skinscan.sa.ui.screens.home.HomeScreen
+import com.skinscan.sa.ui.screens.results.ResultsScreen
 import com.skinscan.sa.ui.screens.scan.ScanScreen
 
 /**
@@ -18,6 +21,8 @@ import com.skinscan.sa.ui.screens.scan.ScanScreen
  * - home → scan → results → recommendations
  * - home → history → scan_detail
  * - home → profile → settings
+ *
+ * Sprint 2: Added results/{scanId} route
  */
 
 // Navigation route constants
@@ -28,12 +33,16 @@ object Routes {
     const val PROFILE_SETUP = "profile_setup"
     const val HOME = "home"
     const val SCAN = "scan"
-    const val RESULTS = "results"
-    const val RECOMMENDATIONS = "recommendations"
+    const val RESULTS = "results/{scanId}"
+    const val RECOMMENDATIONS = "recommendations/{scanId}"
     const val HISTORY = "history"
     const val SCAN_DETAIL = "scan_detail/{scanId}"
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
+
+    fun results(scanId: String) = "results/$scanId"
+    fun recommendations(scanId: String) = "recommendations/$scanId"
+    fun scanDetail(scanId: String) = "scan_detail/$scanId"
 }
 
 @Composable
@@ -94,13 +103,33 @@ fun SkinScanNavGraph(
             ScanScreen(
                 onNavigateToHome = {
                     navController.popBackStack()
+                },
+                onNavigateToResults = { scanId ->
+                    navController.navigate(Routes.results(scanId)) {
+                        popUpTo(Routes.SCAN) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = Routes.RESULTS,
+            arguments = listOf(navArgument("scanId") { type = NavType.StringType })
+        ) {
+            ResultsScreen(
+                onNavigateBack = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
+                },
+                onNavigateToRecommendations = { scanId ->
+                    navController.navigate(Routes.recommendations(scanId))
                 }
             )
         }
 
         // TODO Story 1.5: Implement profile setup screen
-        // TODO Story 3.x: Implement scan screens
-        // TODO Story 4.x: Implement results screens
-        // TODO Story 5.x: Implement history screens
+        // TODO Story 3.3+: Implement recommendations screen
+        // TODO Story 4.x: Implement history screens
     }
 }

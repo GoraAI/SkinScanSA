@@ -10,6 +10,8 @@ import java.util.UUID
  *
  * CRITICAL: Contains biometric data - MUST be encrypted (POPIA Section 26)
  * Stored in SQLCipher encrypted database
+ *
+ * Story 2.4/2.5: Extended to include zone analysis data
  */
 @Entity(tableName = "scan_results")
 data class ScanResultEntity(
@@ -20,18 +22,33 @@ data class ScanResultEntity(
 
     val scannedAt: Date = Date(),
 
-    // Face image path (encrypted file on disk)
-    val faceImagePath: String,
+    // Face image path - ALWAYS EMPTY for privacy (Story 6.3)
+    // Image never persisted to disk, only processed in RAM
+    val faceImagePath: String = "",
 
     // Detected skin concerns (JSON array)
-    val detectedConcerns: String, // ["HYPERPIGMENTATION", "ACNE", ...]
+    // e.g., ["HYPERPIGMENTATION", "DRYNESS"]
+    val detectedConcerns: String,
 
-    // Skin tone analysis
-    val fitzpatrickType: Int? = null, // 1-6 scale
+    // Skin tone analysis (Fitzpatrick scale 1-6)
+    val fitzpatrickType: Int? = null,
 
-    // Confidence scores (JSON object)
-    val confidenceScores: String? = null, // {"hyperpigmentation": 0.87, ...}
+    // Fitzpatrick classification confidence (0.0 - 1.0)
+    val fitzpatrickConfidence: Float? = null,
+
+    // Overall concern confidence scores (JSON object)
+    // e.g., {"HYPERPIGMENTATION": 0.87, "DRYNESS": 0.72, ...}
+    val confidenceScores: String? = null,
+
+    // Zone-specific analysis (JSON object)
+    // e.g., {"FOREHEAD": {"HYPERPIGMENTATION": 0.82, ...}, ...}
+    val zoneAnalysis: String? = null,
 
     // Recommendation IDs (JSON array)
-    val recommendedProductIds: String? = null // ["uuid1", "uuid2", ...]
+    // e.g., ["uuid1", "uuid2", ...]
+    val recommendedProductIds: String? = null,
+
+    // Analysis metadata
+    val analysisVersion: String = "1.0.0",
+    val modelVersion: String = "mock-v1"
 )
