@@ -58,10 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.skinscan.sa.data.ml.SkinAnalysisInference.FaceZone
 import com.skinscan.sa.data.ml.SkinAnalysisInference.SkinConcern
-import com.skinscan.sa.ui.theme.Coral400
-import com.skinscan.sa.ui.theme.Green600
-import com.skinscan.sa.ui.theme.Spacing
-import com.skinscan.sa.ui.theme.Teal600
+import com.skinscan.sa.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -86,19 +83,21 @@ fun ResultsScreen(
     val bottomSheetState = rememberModalBottomSheetState()
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Your Skin Analysis") },
+                title = { Text("Your Skin Analysis", color = TextWhite) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = RoseGold
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = DarkBackground
                 )
             )
         }
@@ -108,10 +107,11 @@ fun ResultsScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(DarkBackground)
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = Teal600)
+                    CircularProgressIndicator(color = RoseGold)
                 }
             }
 
@@ -119,6 +119,7 @@ fun ResultsScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(DarkBackground)
                         .padding(paddingValues)
                         .padding(Spacing.l),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -128,16 +129,23 @@ fun ResultsScreen(
                         imageVector = Icons.Default.Warning,
                         contentDescription = null,
                         modifier = Modifier.size(64.dp),
-                        tint = Coral400
+                        tint = ErrorRed
                     )
                     Spacer(modifier = Modifier.height(Spacing.m))
                     Text(
                         text = state.message,
                         style = MaterialTheme.typography.bodyLarge,
+                        color = TextWhite,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(Spacing.l))
-                    Button(onClick = onNavigateBack) {
+                    Button(
+                        onClick = onNavigateBack,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = RoseGold,
+                            contentColor = DarkBackground
+                        )
+                    ) {
                         Text("Go Back")
                     }
                 }
@@ -159,7 +167,8 @@ fun ResultsScreen(
         val result = (uiState as? ResultsUiState.Success)?.result
         ModalBottomSheet(
             onDismissRequest = { selectedZone = null },
-            sheetState = bottomSheetState
+            sheetState = bottomSheetState,
+            containerColor = SurfaceDark2
         ) {
             result?.let {
                 ZoneDetailContent(
@@ -184,6 +193,7 @@ private fun ResultsContent(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(DarkBackground)
             .verticalScroll(scrollState)
             .padding(Spacing.m)
     ) {
@@ -191,7 +201,7 @@ private fun ResultsContent(
         Text(
             text = "Scanned ${dateFormat.format(result.scannedAt)}",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = TextSecondary
         )
 
         Spacer(modifier = Modifier.height(Spacing.m))
@@ -211,7 +221,8 @@ private fun ResultsContent(
             Text(
                 text = "Detected Concerns",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = TextWhite
             )
             Spacer(modifier = Modifier.height(Spacing.s))
 
@@ -230,12 +241,13 @@ private fun ResultsContent(
         Text(
             text = "Zone Analysis",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            color = TextWhite
         )
         Text(
             text = "Tap a zone for details",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = TextSecondary
         )
         Spacer(modifier = Modifier.height(Spacing.s))
 
@@ -250,7 +262,10 @@ private fun ResultsContent(
         Button(
             onClick = onGetRecommendations,
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Teal600)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = RoseGold,
+                contentColor = DarkBackground
+            )
         ) {
             Text("Get Product Recommendations")
         }
@@ -261,7 +276,7 @@ private fun ResultsContent(
         Text(
             text = "100% on-device analysis. Your image was not stored or uploaded.",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = TextSecondary,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
@@ -278,7 +293,7 @@ private fun SkinTypeCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+            containerColor = GlassSurface
         )
     ) {
         Row(
@@ -311,18 +326,19 @@ private fun SkinTypeCard(
                 Text(
                     text = "Fitzpatrick Type ${fitzpatrickType ?: "Unknown"}",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextWhite
                 )
                 Text(
                     text = getFitzpatrickDescription(fitzpatrickType),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = TextSecondary
                 )
                 confidence?.let {
                     Text(
                         text = "${(it * 100).toInt()}% confidence",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = RoseGold
                     )
                 }
             }
@@ -335,7 +351,7 @@ private fun NoConcernsCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Green600.copy(alpha = 0.1f)
+            containerColor = TealAccent.copy(alpha = 0.15f)
         )
     ) {
         Row(
@@ -347,7 +363,7 @@ private fun NoConcernsCard() {
             Icon(
                 imageVector = Icons.Default.CheckCircle,
                 contentDescription = null,
-                tint = Green600,
+                tint = TealAccent,
                 modifier = Modifier.size(48.dp)
             )
             Spacer(modifier = Modifier.width(Spacing.m))
@@ -356,11 +372,12 @@ private fun NoConcernsCard() {
                     text = "Great news!",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Green600
+                    color = TealAccent
                 )
                 Text(
                     text = "No major skin concerns detected. Keep up your current skincare routine!",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextWhite
                 )
             }
         }
@@ -375,7 +392,7 @@ private fun ConcernCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = GlassSurface
         )
     ) {
         Column(
@@ -391,7 +408,8 @@ private fun ConcernCard(
                 Text(
                     text = concern.displayName,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextWhite
                 )
                 Text(
                     text = "${(score * 100).toInt()}%",
@@ -407,14 +425,14 @@ private fun ConcernCard(
                     .fillMaxWidth()
                     .height(8.dp),
                 color = getConcernColor(score),
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                trackColor = SurfaceDark3,
                 strokeCap = StrokeCap.Round
             )
             Spacer(modifier = Modifier.height(Spacing.xs))
             Text(
                 text = concern.description,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = TextSecondary
             )
         }
     }
@@ -428,7 +446,7 @@ private fun FaceZoneVisualization(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = GlassSurface
         )
     ) {
         Box(
@@ -444,9 +462,9 @@ private fun FaceZoneVisualization(
                 val faceWidth = size.width * 0.7f
                 val faceHeight = size.height * 0.85f
 
-                // Draw face outline
+                // Draw face outline with rose gold
                 drawOval(
-                    color = Color.Gray.copy(alpha = 0.3f),
+                    color = RoseGold.copy(alpha = 0.3f),
                     topLeft = Offset(centerX - faceWidth / 2, size.height * 0.05f),
                     size = Size(faceWidth, faceHeight),
                     style = Stroke(width = 2.dp.toPx())
@@ -507,7 +525,8 @@ private fun ZoneButton(
     ) {
         Text(
             text = zone.displayName,
-            style = MaterialTheme.typography.labelSmall
+            style = MaterialTheme.typography.labelSmall,
+            color = TextWhite
         )
         Text(
             text = "${(score * 100).toInt()}%",
@@ -534,7 +553,8 @@ private fun ZoneDetailContent(
         Text(
             text = zone.displayName,
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = TextWhite
         )
         Spacer(modifier = Modifier.height(Spacing.m))
 
@@ -542,7 +562,7 @@ private fun ZoneDetailContent(
             Text(
                 text = "No detailed analysis available for this zone.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = TextSecondary
             )
         } else {
             concerns.entries
@@ -559,12 +579,13 @@ private fun ZoneDetailContent(
                             Text(
                                 text = concern.displayName,
                                 style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
+                                color = TextWhite
                             )
                             Text(
                                 text = concern.description,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = TextSecondary
                             )
                         }
                         Text(
@@ -609,8 +630,8 @@ private fun getFitzpatrickDescription(type: Int?): String {
 
 private fun getConcernColor(score: Float): Color {
     return when {
-        score >= 0.7f -> Coral400
-        score >= 0.4f -> Color(0xFFFFA726) // Orange
-        else -> Green600
+        score >= 0.7f -> ErrorRed
+        score >= 0.4f -> WarningAmber
+        else -> TealAccent
     }
 }

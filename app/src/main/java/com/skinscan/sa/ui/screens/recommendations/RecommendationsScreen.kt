@@ -67,10 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.skinscan.sa.data.db.entity.ProductEntity
 import com.skinscan.sa.domain.usecase.GetRecommendationsUseCase.ProductRecommendation
-import com.skinscan.sa.ui.theme.Coral400
-import com.skinscan.sa.ui.theme.Green600
-import com.skinscan.sa.ui.theme.Spacing
-import com.skinscan.sa.ui.theme.Teal600
+import com.skinscan.sa.ui.theme.*
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -91,19 +88,21 @@ fun RecommendationsScreen(
     val expandedProductId by viewModel.expandedProductId.collectAsState()
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Your Personalized Routine") },
+                title = { Text("Your Personalized Routine", color = TextWhite) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = RoseGold
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = DarkBackground
                 )
             )
         }
@@ -113,13 +112,14 @@ fun RecommendationsScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(DarkBackground)
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator(color = Teal600)
+                        CircularProgressIndicator(color = RoseGold)
                         Spacer(modifier = Modifier.height(Spacing.m))
-                        Text("Finding your perfect products...")
+                        Text("Finding your perfect products...", color = TextWhite)
                     }
                 }
             }
@@ -128,6 +128,7 @@ fun RecommendationsScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(DarkBackground)
                         .padding(paddingValues)
                         .padding(Spacing.l),
                     contentAlignment = Alignment.Center
@@ -135,10 +136,17 @@ fun RecommendationsScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = state.message,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            color = TextWhite
                         )
                         Spacer(modifier = Modifier.height(Spacing.m))
-                        Button(onClick = onNavigateBack) {
+                        Button(
+                            onClick = onNavigateBack,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = RoseGold,
+                                contentColor = DarkBackground
+                            )
+                        ) {
                             Text("Go Back")
                         }
                     }
@@ -173,6 +181,7 @@ private fun RecommendationsContent(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
+            .background(DarkBackground)
             .padding(horizontal = Spacing.m),
         verticalArrangement = Arrangement.spacedBy(Spacing.m)
     ) {
@@ -183,7 +192,7 @@ private fun RecommendationsContent(
                 Text(
                     text = "Based on your scan from ${dateFormat.format(state.scanDate)}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = TextSecondary
                 )
                 Spacer(modifier = Modifier.height(Spacing.m))
 
@@ -217,6 +226,7 @@ private fun RecommendationsContent(
                         text = getCategoryDisplayName(category),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
+                        color = TextWhite,
                         modifier = Modifier.padding(top = Spacing.s)
                     )
                 }
@@ -237,7 +247,7 @@ private fun RecommendationsContent(
             Text(
                 text = "Recommendations based on 100% on-device analysis. Your data stays private.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = TextSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -270,10 +280,12 @@ private fun CategoryFilterChips(
             FilterChip(
                 selected = selectedCategory == value,
                 onClick = { onCategorySelected(value) },
-                label = { Text(label) },
+                label = { Text(label, color = if (selectedCategory == value) DarkBackground else TextSecondary) },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Teal600,
-                    selectedLabelColor = Color.White
+                    selectedContainerColor = RoseGold,
+                    selectedLabelColor = DarkBackground,
+                    containerColor = GlassSurface,
+                    labelColor = TextSecondary
                 )
             )
         }
@@ -294,7 +306,7 @@ private fun ProductCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = GlassSurface
         )
     ) {
         Column(modifier = Modifier.padding(Spacing.m)) {
@@ -308,12 +320,13 @@ private fun ProductCard(
                     Text(
                         text = product.brand,
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = TextSecondary
                     )
                     Text(
                         text = product.name,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
+                        color = TextWhite,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -335,7 +348,7 @@ private fun ProductCard(
                     text = priceFormat.format(product.priceZar),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Teal600
+                    color = RoseGold
                 )
 
                 product.rating?.let { rating ->
@@ -343,13 +356,14 @@ private fun ProductCard(
                         Icon(
                             imageVector = Icons.Default.Star,
                             contentDescription = null,
-                            tint = Color(0xFFFFC107),
+                            tint = Champagne,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "%.1f".format(rating),
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextWhite
                         )
                     }
                 }
@@ -381,9 +395,9 @@ private fun ProductCard(
                                 )
                             },
                             colors = AssistChipDefaults.assistChipColors(
-                                containerColor = Green600.copy(alpha = 0.1f),
-                                labelColor = Green600,
-                                leadingIconContentColor = Green600
+                                containerColor = TealAccent.copy(alpha = 0.15f),
+                                labelColor = TealAccent,
+                                leadingIconContentColor = TealAccent
                             ),
                             modifier = Modifier.height(28.dp)
                         )
@@ -403,12 +417,12 @@ private fun ProductCard(
                 Text(
                     text = if (isExpanded) "Show less" else "View details",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Teal600
+                    color = RoseGold
                 )
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = null,
-                    tint = Teal600,
+                    tint = RoseGold,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -441,16 +455,16 @@ private fun ProductCard(
 @Composable
 private fun CompatibilityBadge(score: Int) {
     val color = when {
-        score >= 70 -> Green600
-        score >= 50 -> Color(0xFFFFA726)
-        else -> Coral400
+        score >= 70 -> TealAccent
+        score >= 50 -> WarningAmber
+        else -> ErrorRed
     }
 
     Box(
         modifier = Modifier
             .size(48.dp)
             .clip(CircleShape)
-            .background(color.copy(alpha = 0.1f)),
+            .background(color.copy(alpha = 0.15f)),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -478,7 +492,7 @@ private fun ProductDetailExpanded(
         Text(
             text = product.description,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = TextSecondary
         )
 
         Spacer(modifier = Modifier.height(Spacing.m))
@@ -488,7 +502,8 @@ private fun ProductDetailExpanded(
             Text(
                 text = "Key Ingredients",
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = TextWhite
             )
             Spacer(modifier = Modifier.height(Spacing.xs))
             FlowRow(
@@ -506,8 +521,8 @@ private fun ProductDetailExpanded(
                             )
                         },
                         colors = AssistChipDefaults.assistChipColors(
-                            containerColor = Teal600.copy(alpha = 0.1f),
-                            labelColor = Teal600
+                            containerColor = RoseGold.copy(alpha = 0.15f),
+                            labelColor = RoseGold
                         ),
                         modifier = Modifier.height(28.dp)
                     )
@@ -521,7 +536,8 @@ private fun ProductDetailExpanded(
         Text(
             text = "Match Breakdown",
             style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            color = TextWhite
         )
         Spacer(modifier = Modifier.height(Spacing.xs))
         ScoreBreakdownRow("Ingredients", recommendation.ingredientScore, 50f)
@@ -539,7 +555,7 @@ private fun ProductDetailExpanded(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = Teal600.copy(alpha = 0.1f),
+                        color = TealAccent.copy(alpha = 0.15f),
                         shape = RoundedCornerShape(8.dp)
                     )
                     .padding(Spacing.s),
@@ -548,14 +564,14 @@ private fun ProductDetailExpanded(
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = null,
-                    tint = Teal600,
+                    tint = TealAccent,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(Spacing.s))
                 Text(
                     text = "Optimized for melanin-rich skin",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Teal600
+                    color = TealAccent
                 )
             }
             Spacer(modifier = Modifier.height(Spacing.m))
@@ -597,12 +613,13 @@ private fun ScoreBreakdownRow(
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = TextSecondary
         )
         Text(
             text = "${score.toInt()}/${maxScore.toInt()}",
             style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            color = TextWhite
         )
     }
 }

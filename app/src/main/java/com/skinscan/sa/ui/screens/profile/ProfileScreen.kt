@@ -62,9 +62,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.skinscan.sa.data.ml.SkinAnalysisInference.SkinConcern
-import com.skinscan.sa.ui.theme.Coral400
-import com.skinscan.sa.ui.theme.Spacing
-import com.skinscan.sa.ui.theme.Teal600
+import com.skinscan.sa.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -90,19 +88,21 @@ fun ProfileScreen(
     var showAllergiesSheet by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = DarkBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Profile Settings") },
+                title = { Text("Profile Settings", color = TextWhite) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = RoseGold
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = DarkBackground
                 )
             )
         }
@@ -112,10 +112,11 @@ fun ProfileScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(DarkBackground)
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = Teal600)
+                    CircularProgressIndicator(color = RoseGold)
                 }
             }
 
@@ -123,13 +124,15 @@ fun ProfileScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(DarkBackground)
                         .padding(paddingValues)
                         .padding(Spacing.l),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = state.message,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        color = TextWhite
                     )
                 }
             }
@@ -215,13 +218,14 @@ private fun ProfileContent(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
+            .background(DarkBackground)
             .padding(horizontal = Spacing.m),
         verticalArrangement = Arrangement.spacedBy(Spacing.m)
     ) {
         item {
             Spacer(modifier = Modifier.height(Spacing.s))
 
-            // User avatar placeholder
+            // User avatar placeholder with rose gold
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
@@ -230,13 +234,13 @@ private fun ProfileContent(
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
-                        .background(Teal600),
+                        .background(RoseGold),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "U",
                         style = MaterialTheme.typography.headlineLarge,
-                        color = Color.White,
+                        color = DarkBackground,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -248,7 +252,8 @@ private fun ProfileContent(
             Text(
                 text = "Skin Profile",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = TextWhite
             )
         }
 
@@ -293,7 +298,8 @@ private fun ProfileContent(
             Text(
                 text = "Scan Statistics",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = TextWhite
             )
         }
 
@@ -307,7 +313,8 @@ private fun ProfileContent(
             Text(
                 text = "Privacy & Data",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = TextWhite
             )
         }
 
@@ -316,7 +323,7 @@ private fun ProfileContent(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = GlassSurface
                 )
             ) {
                 Column(
@@ -328,21 +335,22 @@ private fun ProfileContent(
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = null,
-                            tint = Teal600,
+                            tint = TealAccent,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(Spacing.s))
                         Text(
                             text = "POPIA Consent Given",
                             style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
+                            color = TextWhite
                         )
                     }
                     state.popiaConsentDate?.let { date ->
                         Text(
                             text = "Consented on ${dateFormat.format(date)}",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = TextSecondary,
                             modifier = Modifier.padding(start = 28.dp)
                         )
                     }
@@ -356,7 +364,7 @@ private fun ProfileContent(
                 onClick = onDeleteData,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Coral400
+                    contentColor = ErrorRed
                 )
             ) {
                 Icon(
@@ -373,7 +381,7 @@ private fun ProfileContent(
             Text(
                 text = "Your data is stored locally on your device only. Deleting will remove all scan history, profile data, and preferences.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = TextSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -398,7 +406,7 @@ private fun ProfileEditCard(
             .fillMaxWidth()
             .clickable(onClick = onEdit),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = GlassSurface
         )
     ) {
         Row(
@@ -412,17 +420,18 @@ private fun ProfileEditCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = TextSecondary
                 )
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextWhite
                 )
             }
             Icon(
                 imageVector = Icons.Default.Edit,
                 contentDescription = "Edit",
-                tint = Teal600,
+                tint = RoseGold,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -434,7 +443,7 @@ private fun ScanStatsCard(stats: ScanStatistics) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = GlassSurface
         )
     ) {
         Column(
@@ -462,12 +471,13 @@ private fun StatRow(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = TextSecondary
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            color = TextWhite
         )
     }
 }
@@ -484,7 +494,8 @@ private fun ConcernsEditSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState
+        sheetState = sheetState,
+        containerColor = SurfaceDark2
     ) {
         Column(
             modifier = Modifier
@@ -494,7 +505,8 @@ private fun ConcernsEditSheet(
             Text(
                 text = "Select Your Skin Concerns",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = TextWhite
             )
 
             Spacer(modifier = Modifier.height(Spacing.m))
@@ -515,8 +527,10 @@ private fun ConcernsEditSheet(
                         },
                         label = { Text(concern.displayName) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Teal600,
-                            selectedLabelColor = Color.White
+                            selectedContainerColor = RoseGold,
+                            selectedLabelColor = DarkBackground,
+                            containerColor = GlassSurface,
+                            labelColor = TextSecondary
                         )
                     )
                 }
@@ -526,7 +540,11 @@ private fun ConcernsEditSheet(
 
             Button(
                 onClick = { onSave(selectedConcerns.toList()) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = RoseGold,
+                    contentColor = DarkBackground
+                )
             ) {
                 Text("Save")
             }
@@ -737,26 +755,29 @@ private fun DeleteConfirmationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = SurfaceDark2,
         icon = {
             Icon(
                 imageVector = Icons.Default.Warning,
                 contentDescription = null,
-                tint = Coral400
+                tint = ErrorRed
             )
         },
         title = {
-            Text("Delete All Data?")
+            Text("Delete All Data?", color = TextWhite)
         },
         text = {
             Text(
-                "This will permanently delete all your scan history, profile data, and preferences. This action cannot be undone."
+                "This will permanently delete all your scan history, profile data, and preferences. This action cannot be undone.",
+                color = TextSecondary
             )
         },
         confirmButton = {
             Button(
                 onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Coral400
+                    containerColor = ErrorRed,
+                    contentColor = TextWhite
                 )
             ) {
                 Text("Delete Everything")
@@ -764,7 +785,7 @@ private fun DeleteConfirmationDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Cancel", color = TextSecondary)
             }
         }
     )
