@@ -2,6 +2,8 @@ package com.skinscan.sa.data.ml.llm
 
 import android.content.Context
 import android.util.Log
+import com.google.mediapipe.tasks.genai.llminference.LlmInference as MediaPipeLlmInference
+import com.google.mediapipe.tasks.genai.llminference.LlmInference.LlmInferenceOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -13,16 +15,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * LLM Inference Engine (Story 5.1, 5.3, 5.5)
+ * LLM Inference Engine using Gemma 3n E2B
  *
- * Handles generation of product explanations.
+ * Handles generation of product explanations using on-device Gemma 3n E2B model
+ * via MediaPipe LLM Inference API.
  *
- * For MVP: Uses curated template-based responses tailored for South African
- * skin types. This provides reliable, consistent explanations without
- * requiring on-device AI model download.
- *
- * Future: When on-device LLM infrastructure is ready, this will use
- * actual model inference for more personalized explanations.
+ * When model is not available, falls back to curated template-based responses
+ * tailored for South African skin types.
  */
 @Singleton
 class LLMInference @Inject constructor(
@@ -31,8 +30,14 @@ class LLMInference @Inject constructor(
 ) {
     companion object {
         private const val TAG = "LLMInference"
-        private const val UNLOAD_DELAY_MS = 10_000L // 10 seconds idle before unload
+        private const val UNLOAD_DELAY_MS = 30_000L // 30 seconds idle before unload
+        private const val MAX_TOKENS = 256
+        private const val TOP_K = 40
+        private const val TEMPERATURE = 0.8f
     }
+
+    // MediaPipe LLM Inference instance
+    private var llmInference: MediaPipeLlmInference? = null
 
     /**
      * Check if using template-based responses (MVP) vs real LLM
@@ -64,10 +69,10 @@ class LLMInference @Inject constructor(
     val state: StateFlow<InferenceState> = _state.asStateFlow()
 
     /**
-     * Load the LLM model into memory
+     * Load the Gemma 3n E2B model into memory
      *
-     * For MVP (templates): Quick initialization, no model loading needed.
-     * For real LLM: Loads model into RAM (~529MB).
+     * For templates mode: Quick initialization, no model loading needed.
+     * For real LLM: Loads Gemma 3n E2B model via MediaPipe (~1.2GB).
      */
     suspend fun loadModel(): Result<Unit> = withContext(Dispatchers.Default) {
         if (_isLoaded.value) {
@@ -87,13 +92,23 @@ class LLMInference @Inject constructor(
                 Log.d(TAG, "Using curated templates - no model loading required")
                 delay(100) // Brief initialization
             } else {
-                // Real model loading
+                // Load Gemma 3n E2B model via MediaPipe
                 val modelPath = modelDownloadManager.getModelPath()
                 if (modelPath == null) {
-                    throw Exception("Model not downloaded")
+                    throw Exception("Gemma 3n E2B model not downloaded")
                 }
-                // LiteRT model loading code would go here
-                // interpreter = Interpreter.createFromFile(modelPath)
+
+                Log.d(TAG, "Loading Gemma 3n E2B model from: $modelPath")
+
+                val options = LlmInferenceOptions.builder()
+                    .setModelPath(modelPath)
+                    .setMaxTokens(MAX_TOKENS)
+                    .setTopK(TOP_K)
+                    .setTemperature(TEMPERATURE)
+                    .build()
+
+                llmInference = MediaPipeLlmInference.createFromOptions(context, options)
+                Log.d(TAG, "Gemma 3n E2B model loaded successfully")
             }
 
             _isLoaded.value = true
@@ -102,7 +117,7 @@ class LLMInference @Inject constructor(
 
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize inference", e)
+            Log.e(TAG, "Failed to load Gemma 3n E2B model", e)
             _state.value = InferenceState.Error(e.message ?: "Load failed")
             Result.failure(e)
         } finally {
@@ -196,13 +211,19 @@ class LLMInference @Inject constructor(
     }
 
     /**
-     * Run actual LLM inference (for production)
+     * Run actual LLM inference using MediaPipe Gemma 3n E2B
      */
     private suspend fun runLLMInference(prompt: String): String {
-        // This would be the actual LiteRT LLM inference
-        // For now, return template response
-        delay(500) // Simulate inference time
-        return generateTemplateResponse(prompt)
+        val inference = llmInference ?: throw Exception("LLM not loaded")
+
+        Log.d(TAG, "Running Gemma 3n E2B inference...")
+
+        // Generate response using MediaPipe LLM Inference API
+        val response = inference.generateResponse(prompt)
+
+        Log.d(TAG, "Gemma 3n E2B inference complete, response length: ${response.length}")
+
+        return response.trim()
     }
 
     /**
@@ -243,11 +264,15 @@ class LLMInference @Inject constructor(
     fun unloadModel() {
         if (!_isLoaded.value) return
 
-        Log.d(TAG, "Unloading model to free memory")
+        Log.d(TAG, "Unloading Gemma 3n E2B model to free memory")
 
-        // In production, this would close the LiteRT interpreter
-        // interpreter?.close()
-        // interpreter = null
+        // Close MediaPipe LLM Inference instance
+        try {
+            llmInference?.close()
+            llmInference = null
+        } catch (e: Exception) {
+            Log.w(TAG, "Error closing LLM inference: ${e.message}")
+        }
 
         _isLoaded.value = false
         _state.value = InferenceState.Idle
@@ -255,7 +280,7 @@ class LLMInference @Inject constructor(
         // Hint to garbage collector
         System.gc()
 
-        Log.d(TAG, "Model unloaded, memory freed")
+        Log.d(TAG, "Gemma 3n E2B model unloaded, memory freed")
     }
 
     /**
@@ -272,7 +297,7 @@ class LLMInference @Inject constructor(
      */
     fun getMemoryUsageMB(): Long {
         return if (_isLoaded.value && !isUsingTemplates) {
-            529 // Real LLM model ~529MB
+            1200 // Gemma 3n E2B model ~1.2GB
         } else {
             0 // Templates use negligible memory
         }
@@ -285,7 +310,7 @@ class LLMInference @Inject constructor(
         return if (isUsingTemplates) {
             "Using curated skin care insights"
         } else {
-            "Using on-device AI"
+            "Using Gemma 3n E2B on-device AI"
         }
     }
 }

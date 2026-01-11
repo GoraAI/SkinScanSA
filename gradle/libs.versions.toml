@@ -31,6 +31,7 @@ securityCrypto = "1.1.0-alpha06"
 # LiteRT / MediaPipe
 litert = "1.0.1"
 mediapipe = "0.10.18"
+mediapipeGenai = "0.10.27"
 
 # Navigation
 navigationCompose = "2.8.5"
@@ -93,6 +94,7 @@ androidx-security-crypto = { group = "androidx.security", name = "security-crypt
 litert = { group = "com.google.ai.edge.litert", name = "litert", version.ref = "litert" }
 litert-gpu = { group = "com.google.ai.edge.litert", name = "litert-gpu", version.ref = "litert" }
 mediapipe-tasks-vision = { group = "com.google.mediapipe", name = "tasks-vision", version.ref = "mediapipe" }
+mediapipe-tasks-genai = { group = "com.google.mediapipe", name = "tasks-genai", version.ref = "mediapipeGenai" }
 
 # Navigation
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }

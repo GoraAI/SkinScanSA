@@ -102,6 +102,7 @@ dependencies {
     implementation(libs.litert)
     implementation(libs.litert.gpu)
     implementation(libs.mediapipe.tasks.vision)
+    implementation(libs.mediapipe.tasks.genai)
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
