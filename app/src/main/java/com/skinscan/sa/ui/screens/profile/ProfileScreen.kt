@@ -62,9 +62,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.skinscan.sa.data.ml.SkinAnalysisInference.SkinConcern
-import com.skinscan.sa.ui.theme.Coral400
+import com.skinscan.sa.ui.theme.DarkBackground
+import com.skinscan.sa.ui.theme.ErrorRed
+import com.skinscan.sa.ui.theme.GlassBorder
+import com.skinscan.sa.ui.theme.GlassSurface
+import com.skinscan.sa.ui.theme.RoseGold
 import com.skinscan.sa.ui.theme.Spacing
-import com.skinscan.sa.ui.theme.Teal600
+import com.skinscan.sa.ui.theme.SurfaceBlack
+import com.skinscan.sa.ui.theme.TealAccent
+import com.skinscan.sa.ui.theme.TextSecondary
+import com.skinscan.sa.ui.theme.TextWhite
+import com.skinscan.sa.ui.theme.glassSurface
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -92,17 +100,23 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Profile Settings") },
+                title = {
+                    Text(
+                        "Profile Settings",
+                        color = TextWhite
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = TextWhite
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = DarkBackground
                 )
             )
         }
@@ -112,10 +126,11 @@ fun ProfileScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(DarkBackground)
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = Teal600)
+                    CircularProgressIndicator(color = TealAccent)
                 }
             }
 
@@ -123,13 +138,15 @@ fun ProfileScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(DarkBackground)
                         .padding(paddingValues)
                         .padding(Spacing.l),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = state.message,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        color = TextWhite
                     )
                 }
             }

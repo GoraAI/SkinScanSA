@@ -1,100 +1,63 @@
 package com.skinscan.sa.ui.theme
 
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 
-private val LightColorScheme = lightColorScheme(
-    primary = Teal600,
-    onPrimary = Color.White,
-    primaryContainer = Teal50,
-    onPrimaryContainer = Teal700,
+// ============================================
+// GLOW GUIDE THEME
+// ============================================
 
-    secondary = DeepPurple700,
-    onSecondary = Color.White,
-    secondaryContainer = DeepPurple50,
-    onSecondaryContainer = DeepPurple800,
+private val GlowGuideColorScheme = darkColorScheme(
+    primary = RoseGold,
+    onPrimary = DarkBackground,
+    primaryContainer = RoseGoldDark,
+    onPrimaryContainer = TextWhite,
 
-    tertiary = Coral400,
-    onTertiary = Color.White,
-    tertiaryContainer = Coral50,
-    onTertiaryContainer = Coral500,
+    secondary = TealAccent,
+    onSecondary = DarkBackground,
+    secondaryContainer = TealAccent.copy(alpha = 0.3f),
+    onSecondaryContainer = TextWhite,
 
-    error = Red600,
-    onError = Color.White,
-    errorContainer = Red50,
-    onErrorContainer = Red700,
+    tertiary = Champagne,
+    onTertiary = DarkBackground,
+    tertiaryContainer = Champagne.copy(alpha = 0.3f),
+    onTertiaryContainer = TextWhite,
 
-    background = WarmOffWhite,
-    onBackground = TextPrimary,
-
-    surface = Color.White,
-    onSurface = TextPrimary,
-    surfaceVariant = SurfaceGray,
-    onSurfaceVariant = TextSecondary,
-
-    outline = TextDisabled,
-    outlineVariant = Color(0xFFE0E0E0)
-)
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Teal500,
-    onPrimary = Color.Black,
-    primaryContainer = Teal700,
-    onPrimaryContainer = Teal50,
-
-    secondary = DeepPurple700,
-    onSecondary = Color.Black,
-    secondaryContainer = DeepPurple800,
-    onSecondaryContainer = DeepPurple50,
-
-    tertiary = Coral400,
-    onTertiary = Color.Black,
-    tertiaryContainer = Coral500,
-    onTertiaryContainer = Coral50,
-
-    error = Red600,
-    onError = Color.Black,
-    errorContainer = Red700,
-    onErrorContainer = Red50,
+    error = ErrorRed,
+    onError = TextWhite,
+    errorContainer = ErrorRed.copy(alpha = 0.3f),
+    onErrorContainer = TextWhite,
 
     background = DarkBackground,
-    onBackground = TextPrimaryDark,
+    onBackground = TextWhite,
 
-    surface = DarkSurface,
-    onSurface = TextPrimaryDark,
-    surfaceVariant = Color(0xFF2C2C2C),
-    onSurfaceVariant = TextSecondaryDark,
+    surface = SurfaceBlack,
+    onSurface = TextWhite,
+    surfaceVariant = GlassSurface,
+    onSurfaceVariant = TextSecondary,
 
-    outline = Color(0xFF6E6E6E),
-    outlineVariant = Color(0xFF3E3E3E)
+    outline = GlassBorder.copy(alpha = 0.2f),
+    outlineVariant = GlassBorder.copy(alpha = 0.1f)
 )
 
 @Composable
-fun SkinScanSATheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true, // Use dynamic color on Android 12+
+fun GlowGuideTheme(
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = GlowGuideColorScheme,
         typography = Typography,
         content = content
     )
+}
+
+// Keep old theme name for backwards compatibility during migration
+@Composable
+fun SkinScanSATheme(
+    darkTheme: Boolean = true,
+    dynamicColor: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    GlowGuideTheme(content = content)
 }
