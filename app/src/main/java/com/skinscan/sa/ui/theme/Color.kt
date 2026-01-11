@@ -31,3 +31,8 @@ val WarningYellow = Color(0xFFFFC107)
 val ChartLine1 = TealAccent
 val ChartLine2 = RoseGold
 val ChartGrid = Color(0xFF3A3A3A)
+
+// Legacy Color Aliases (for backward compatibility)
+val Coral400 = RoseGold
+val Green600 = SuccessGreen
+val Teal600 = TealAccent
