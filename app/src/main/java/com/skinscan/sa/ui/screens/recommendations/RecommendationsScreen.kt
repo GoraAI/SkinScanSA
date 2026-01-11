@@ -67,13 +67,16 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.skinscan.sa.data.db.entity.ProductEntity
 import com.skinscan.sa.domain.usecase.GetRecommendationsUseCase.ProductRecommendation
+import com.skinscan.sa.ui.theme.Coral400
 import com.skinscan.sa.ui.theme.DarkBackground
 import com.skinscan.sa.ui.theme.ErrorRed
 import com.skinscan.sa.ui.theme.GlassSurface
+import com.skinscan.sa.ui.theme.Green600
 import com.skinscan.sa.ui.theme.RoseGold
 import com.skinscan.sa.ui.theme.Spacing
 import com.skinscan.sa.ui.theme.SuccessGreen
 import com.skinscan.sa.ui.theme.SurfaceBlack
+import com.skinscan.sa.ui.theme.Teal600
 import com.skinscan.sa.ui.theme.TealAccent
 import com.skinscan.sa.ui.theme.TextSecondary
 import com.skinscan.sa.ui.theme.TextWhite
