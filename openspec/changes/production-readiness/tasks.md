@@ -61,9 +61,9 @@
 - [x] Verify grep shows zero "default_user" matches in codebase
 - [x] Unit test: UserSessionManager generates consistent UUID
 - [x] Unit test: SkinAnalysisInference returns varied results for different images
-- [ ] Integration test: Full scan flow works end-to-end
-- [ ] Visual verification: Camera shows user's face correctly
-- [ ] Visual verification: Analysis results display properly
+- [x] Integration test: Full scan flow works end-to-end
+- [x] Visual verification: Camera shows user's face correctly
+- [x] Visual verification: Analysis results display properly
 
 ## Verification Commands
 
