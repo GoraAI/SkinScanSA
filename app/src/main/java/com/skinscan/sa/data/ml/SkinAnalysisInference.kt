@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.abs
+import kotlin.math.pow
 import kotlin.math.sqrt
 
 /**
@@ -282,18 +283,18 @@ class SkinAnalysisInference @Inject constructor(
         var gg = g / 255.0
         var bb = b / 255.0
 
-        rr = if (rr > 0.04045) kotlin.math.pow((rr + 0.055) / 1.055, 2.4) else rr / 12.92
-        gg = if (gg > 0.04045) kotlin.math.pow((gg + 0.055) / 1.055, 2.4) else gg / 12.92
-        bb = if (bb > 0.04045) kotlin.math.pow((bb + 0.055) / 1.055, 2.4) else bb / 12.92
+        rr = if (rr > 0.04045) ((rr + 0.055) / 1.055).pow(2.4) else rr / 12.92
+        gg = if (gg > 0.04045) ((gg + 0.055) / 1.055).pow(2.4) else gg / 12.92
+        bb = if (bb > 0.04045) ((bb + 0.055) / 1.055).pow(2.4) else bb / 12.92
 
         val x = (rr * 0.4124 + gg * 0.3576 + bb * 0.1805) / 0.95047
         val y = (rr * 0.2126 + gg * 0.7152 + bb * 0.0722) / 1.00000
         val z = (rr * 0.0193 + gg * 0.1192 + bb * 0.9505) / 1.08883
 
         // XYZ to Lab
-        val fx = if (x > 0.008856) kotlin.math.pow(x, 1.0/3.0) else (7.787 * x) + 16.0/116.0
-        val fy = if (y > 0.008856) kotlin.math.pow(y, 1.0/3.0) else (7.787 * y) + 16.0/116.0
-        val fz = if (z > 0.008856) kotlin.math.pow(z, 1.0/3.0) else (7.787 * z) + 16.0/116.0
+        val fx = if (x > 0.008856) x.pow(1.0/3.0) else (7.787 * x) + 16.0/116.0
+        val fy = if (y > 0.008856) y.pow(1.0/3.0) else (7.787 * y) + 16.0/116.0
+        val fz = if (z > 0.008856) z.pow(1.0/3.0) else (7.787 * z) + 16.0/116.0
 
         val labL = (116.0 * fy) - 16.0
         val labA = 500.0 * (fx - fy)
