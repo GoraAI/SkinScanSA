@@ -6,32 +6,32 @@ import org.junit.Test
 import org.junit.Assert.*
 
 /**
- * Test Trusted Glow theme colors match specification
+ * Test Glow Guide theme colors match specification
  */
 class ThemeTest {
     @Test
-    fun `primary color is Teal 600`() {
-        assertEquals(Color(0xFF00897B), Teal600)
+    fun `primary color is TealAccent`() {
+        assertEquals(Color(0xFF64FFDA), TealAccent)
     }
 
     @Test
-    fun `secondary color is Deep Purple 700`() {
-        assertEquals(Color(0xFF512DA8), DeepPurple700)
+    fun `secondary color is RoseGold`() {
+        assertEquals(Color(0xFFE0BFB8), RoseGold)
     }
 
     @Test
-    fun `accent color is Coral 400`() {
-        assertEquals(Color(0xFFFF7043), Coral400)
+    fun `dark background is correct`() {
+        assertEquals(Color(0xFF121212), DarkBackground)
     }
 
     @Test
-    fun `success color is Green 600`() {
-        assertEquals(Color(0xFF43A047), Green600)
+    fun `success color is SuccessGreen`() {
+        assertEquals(Color(0xFF4CAF50), SuccessGreen)
     }
 
     @Test
-    fun `error color is Red 600`() {
-        assertEquals(Color(0xFFE53935), Red600)
+    fun `error color is ErrorRed`() {
+        assertEquals(Color(0xFFE53935), ErrorRed)
     }
 
     @Test
