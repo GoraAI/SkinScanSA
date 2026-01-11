@@ -61,7 +61,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
@@ -361,7 +363,7 @@ private fun FaceScanCameraScreen(
                 },
                 onAnalyze = {
                     capturedBitmap?.let { bitmap ->
-                        viewModel.analyzeFace(bitmap, "default_user")
+                        viewModel.analyzeFace(bitmap)
                     }
                 },
                 onBack = onBack
@@ -445,7 +447,11 @@ private fun CameraPreviewWithOverlay(
  */
 @Composable
 private fun FaceGuideOverlay() {
-    Canvas(modifier = Modifier.fillMaxSize()) {
+    Canvas(
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+    ) {
         val canvasWidth = size.width
         val canvasHeight = size.height
 

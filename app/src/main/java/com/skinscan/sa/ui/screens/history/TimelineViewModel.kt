@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.skinscan.sa.data.db.dao.ScanResultDao
 import com.skinscan.sa.data.db.entity.ScanResultEntity
 import com.skinscan.sa.data.ml.SkinAnalysisInference.SkinConcern
+import com.skinscan.sa.data.session.UserSessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,13 +22,16 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class TimelineViewModel @Inject constructor(
-    private val scanResultDao: ScanResultDao
+    private val scanResultDao: ScanResultDao,
+    private val userSessionManager: UserSessionManager
 ) : ViewModel() {
 
     companion object {
-        private const val DEFAULT_USER_ID = "default_user"
         private const val MIN_SCANS_FOR_TIMELINE = 3
     }
+
+    private val userId: String
+        get() = userSessionManager.userId
 
     private val _uiState = MutableStateFlow<TimelineUiState>(TimelineUiState.Loading)
     val uiState: StateFlow<TimelineUiState> = _uiState.asStateFlow()
@@ -50,7 +54,7 @@ class TimelineViewModel @Inject constructor(
                 _uiState.value = TimelineUiState.Loading
 
                 val startDate = calculateStartDate(_selectedRange.value)
-                val scans = scanResultDao.getByUserInDateRange(DEFAULT_USER_ID, startDate)
+                val scans = scanResultDao.getByUserInDateRange(userId, startDate)
 
                 if (scans.size < MIN_SCANS_FOR_TIMELINE) {
                     _uiState.value = TimelineUiState.NotEnoughData

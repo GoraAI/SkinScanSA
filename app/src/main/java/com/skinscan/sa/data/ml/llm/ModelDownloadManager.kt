@@ -21,9 +21,13 @@ import javax.inject.Singleton
 /**
  * Model Download Manager (Story 5.1)
  *
- * Handles download, verification, and storage of Gemma 3n LLM model.
- * For MVP, we use a mock implementation since the actual model requires
- * significant storage and download infrastructure.
+ * Handles download, verification, and storage of LLM models.
+ *
+ * For MVP: On-device LLM is not available. The app uses template-based
+ * explanations which are clearly disclosed to users. No fake downloads.
+ *
+ * Future: When model infrastructure is ready, this will download the
+ * actual model from a verified source with proper checksum validation.
  */
 @Singleton
 class ModelDownloadManager @Inject constructor(
@@ -32,16 +36,16 @@ class ModelDownloadManager @Inject constructor(
     companion object {
         private const val TAG = "ModelDownloadManager"
 
-        // Model info (actual Gemma 3n would be ~529MB)
-        // For MVP, we simulate the download and use template-based explanations
-        const val MODEL_NAME = "gemma-3n-4bit"
-        const val MODEL_FILE_NAME = "gemma-3n.litertlm"
-        const val MODEL_SIZE_BYTES = 529_000_000L // 529MB
-        const val MODEL_URL = "https://huggingface.co/google/gemma-3n-e4b/resolve/main/gemma-3n-4bit.litertlm"
-        const val MODEL_SHA256 = "placeholder_sha256_checksum" // Would be actual checksum
+        // Model info (placeholder for future real model)
+        const val MODEL_NAME = "skin-analysis-llm"
+        const val MODEL_FILE_NAME = "skin-llm.litertlm"
+        const val MODEL_SIZE_BYTES = 529_000_000L // ~529MB when available
+        const val MODEL_URL = "" // No URL for MVP - model not yet available
+        const val MODEL_SHA256 = "" // Checksum will be set when model is available
 
-        // For MVP, we'll mark model as available after simulated download
-        private const val MVP_MOCK_MODEL = true
+        // MVP: Model download is disabled - using template fallback
+        // Set to false when real model infrastructure is ready
+        private const val MODEL_AVAILABLE_FOR_DOWNLOAD = false
     }
 
     private val modelsDir: File
@@ -76,17 +80,38 @@ class ModelDownloadManager @Inject constructor(
 
     /**
      * Check if model is already downloaded
+     *
+     * For MVP: Always returns false - model not available, using templates
      */
     fun checkModelAvailability(): Boolean {
-        val available = if (MVP_MOCK_MODEL) {
-            // For MVP, check if we've previously "downloaded" (simulated)
-            context.getSharedPreferences("model_prefs", Context.MODE_PRIVATE)
-                .getBoolean("model_downloaded", false)
+        val available = if (!MODEL_AVAILABLE_FOR_DOWNLOAD) {
+            // MVP: Model not available for download
+            false
         } else {
             modelFile.exists() && modelFile.length() > 0
         }
         _modelAvailable.value = available
         return available
+    }
+
+    /**
+     * Check if on-device AI is available
+     *
+     * For MVP: Returns false with honest messaging
+     */
+    fun isOnDeviceAIAvailable(): Boolean = MODEL_AVAILABLE_FOR_DOWNLOAD && checkModelAvailability()
+
+    /**
+     * Get explanation for why on-device AI is not available
+     */
+    fun getAIUnavailableReason(): String {
+        return if (!MODEL_AVAILABLE_FOR_DOWNLOAD) {
+            "On-device AI explanations are not yet available. Using curated skin care insights instead."
+        } else if (!checkModelAvailability()) {
+            "AI model not downloaded. Using curated insights."
+        } else {
+            ""
+        }
     }
 
     /**
@@ -112,12 +137,23 @@ class ModelDownloadManager @Inject constructor(
     /**
      * Start model download
      *
-     * For MVP, this simulates the download process.
-     * In production, this would download the actual Gemma 3n model.
+     * For MVP: Returns error - model not available for download.
+     * When model infrastructure is ready, this will perform real download.
      *
      * @param wifiOnly Only download on WiFi
      */
     suspend fun downloadModel(wifiOnly: Boolean = true): Result<Unit> = withContext(Dispatchers.IO) {
+        // MVP: Model download not available
+        if (!MODEL_AVAILABLE_FOR_DOWNLOAD) {
+            Log.d(TAG, "Model download not available in MVP - using template fallback")
+            _downloadState.value = DownloadState.Error(
+                "On-device AI is not yet available. The app uses curated skin care insights instead."
+            )
+            return@withContext Result.failure(
+                Exception("On-device AI model not available in this version")
+            )
+        }
+
         try {
             _downloadState.value = DownloadState.Checking
 
@@ -132,19 +168,8 @@ class ModelDownloadManager @Inject constructor(
                 return@withContext Result.failure(Exception("WiFi required"))
             }
 
-            if (MVP_MOCK_MODEL) {
-                // Simulate download for MVP
-                simulateDownload()
-            } else {
-                // Real download implementation
-                performRealDownload()
-            }
-
-            // Mark as downloaded
-            context.getSharedPreferences("model_prefs", Context.MODE_PRIVATE)
-                .edit()
-                .putBoolean("model_downloaded", true)
-                .apply()
+            // Real download implementation
+            performRealDownload()
 
             _modelAvailable.value = true
             _downloadState.value = DownloadState.Success
@@ -156,30 +181,6 @@ class ModelDownloadManager @Inject constructor(
             _downloadState.value = DownloadState.Error(e.message ?: "Download failed")
             Result.failure(e)
         }
-    }
-
-    /**
-     * Simulate download for MVP (no actual model file)
-     */
-    private suspend fun simulateDownload() {
-        val totalBytes = MODEL_SIZE_BYTES
-        var downloaded = 0L
-        val chunkSize = totalBytes / 20 // 20 progress updates
-
-        while (downloaded < totalBytes) {
-            // Simulate download progress
-            kotlinx.coroutines.delay(100) // 100ms per chunk = 2 seconds total
-            downloaded = (downloaded + chunkSize).coerceAtMost(totalBytes)
-            val progress = downloaded.toFloat() / totalBytes
-            _downloadState.value = DownloadState.Downloading(
-                progress = progress,
-                bytesDownloaded = downloaded,
-                totalBytes = totalBytes
-            )
-        }
-
-        _downloadState.value = DownloadState.Verifying
-        kotlinx.coroutines.delay(500) // Simulate verification
     }
 
     /**
@@ -240,9 +241,9 @@ class ModelDownloadManager @Inject constructor(
      * Verify file SHA-256 checksum
      */
     private fun verifyChecksum(file: File, expectedHash: String): Boolean {
-        if (expectedHash == "placeholder_sha256_checksum") {
-            // Skip verification for MVP placeholder
-            return true
+        if (expectedHash.isEmpty()) {
+            Log.w(TAG, "No checksum configured - skipping verification")
+            return false // Fail safe - don't accept unverified files
         }
 
         val digest = MessageDigest.getInstance("SHA-256")
@@ -283,12 +284,14 @@ class ModelDownloadManager @Inject constructor(
 
     /**
      * Get model file path (for LLM inference)
+     *
+     * Returns null if model not available (MVP uses template fallback)
      */
     fun getModelPath(): String? {
-        return if (MVP_MOCK_MODEL) {
-            // For MVP, return null to indicate template fallback
+        return if (!MODEL_AVAILABLE_FOR_DOWNLOAD) {
+            // MVP: Model not available, use template fallback
             null
-        } else if (modelFile.exists()) {
+        } else if (modelFile.exists() && modelFile.length() > 0) {
             modelFile.absolutePath
         } else {
             null

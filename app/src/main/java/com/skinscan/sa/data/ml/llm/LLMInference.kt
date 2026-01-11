@@ -15,9 +15,14 @@ import javax.inject.Singleton
 /**
  * LLM Inference Engine (Story 5.1, 5.3, 5.5)
  *
- * Handles loading, inference, and memory management for Gemma 3n.
- * For MVP, uses template-based fallback since actual model requires
- * significant infrastructure.
+ * Handles generation of product explanations.
+ *
+ * For MVP: Uses curated template-based responses tailored for South African
+ * skin types. This provides reliable, consistent explanations without
+ * requiring on-device AI model download.
+ *
+ * Future: When on-device LLM infrastructure is ready, this will use
+ * actual model inference for more personalized explanations.
  */
 @Singleton
 class LLMInference @Inject constructor(
@@ -27,10 +32,13 @@ class LLMInference @Inject constructor(
     companion object {
         private const val TAG = "LLMInference"
         private const val UNLOAD_DELAY_MS = 10_000L // 10 seconds idle before unload
-
-        // MVP uses templates instead of actual LLM
-        private const val MVP_USE_TEMPLATES = true
     }
+
+    /**
+     * Check if using template-based responses (MVP) vs real LLM
+     */
+    val isUsingTemplates: Boolean
+        get() = !modelDownloadManager.isOnDeviceAIAvailable()
 
     private val _isLoaded = MutableStateFlow(false)
     val isLoaded: StateFlow<Boolean> = _isLoaded.asStateFlow()
@@ -58,8 +66,8 @@ class LLMInference @Inject constructor(
     /**
      * Load the LLM model into memory
      *
-     * For MVP, this is a no-op since we use templates.
-     * In production, this would load Gemma 3n (~529MB into RAM).
+     * For MVP (templates): Quick initialization, no model loading needed.
+     * For real LLM: Loads model into RAM (~529MB).
      */
     suspend fun loadModel(): Result<Unit> = withContext(Dispatchers.Default) {
         if (_isLoaded.value) {
@@ -74,12 +82,12 @@ class LLMInference @Inject constructor(
             _isLoading.value = true
             _state.value = InferenceState.Loading
 
-            if (MVP_USE_TEMPLATES) {
-                // Simulate model loading for MVP
-                Log.d(TAG, "MVP mode: Simulating model load")
-                delay(500) // Brief delay to simulate loading
+            if (isUsingTemplates) {
+                // Template mode: No model loading needed
+                Log.d(TAG, "Using curated templates - no model loading required")
+                delay(100) // Brief initialization
             } else {
-                // Real model loading would happen here
+                // Real model loading
                 val modelPath = modelDownloadManager.getModelPath()
                 if (modelPath == null) {
                     throw Exception("Model not downloaded")
@@ -90,11 +98,11 @@ class LLMInference @Inject constructor(
 
             _isLoaded.value = true
             _state.value = InferenceState.Ready
-            Log.d(TAG, "Model loaded successfully")
+            Log.d(TAG, "Inference engine ready (templates=${isUsingTemplates})")
 
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to load model", e)
+            Log.e(TAG, "Failed to initialize inference", e)
             _state.value = InferenceState.Error(e.message ?: "Load failed")
             Result.failure(e)
         } finally {
@@ -118,18 +126,20 @@ class LLMInference @Inject constructor(
             _state.value = InferenceState.Generating
             lastInferenceTime = System.currentTimeMillis()
 
-            val result = if (MVP_USE_TEMPLATES) {
-                // MVP: Parse prompt and generate template-based response
+            val result = if (isUsingTemplates) {
+                // Template mode: Generate curated response
                 generateTemplateResponse(prompt)
             } else {
-                // Production: Run actual LLM inference
+                // LLM mode: Run actual model inference
                 runLLMInference(prompt)
             }
 
             _state.value = InferenceState.Ready
 
-            // Schedule unload after delay
-            scheduleUnload()
+            // Schedule unload after delay (only needed for real LLM)
+            if (!isUsingTemplates) {
+                scheduleUnload()
+            }
 
             Result.success(result)
         } catch (e: Exception) {
@@ -249,20 +259,33 @@ class LLMInference @Inject constructor(
     }
 
     /**
-     * Check if LLM is available (model downloaded or using templates)
+     * Check if explanation generation is available
+     *
+     * Always returns true for MVP (templates available)
      */
     fun isAvailable(): Boolean {
-        return MVP_USE_TEMPLATES || modelDownloadManager.checkModelAvailability()
+        return true // Templates always available; real LLM when downloaded
     }
 
     /**
      * Get memory usage estimate
      */
     fun getMemoryUsageMB(): Long {
-        return if (_isLoaded.value && !MVP_USE_TEMPLATES) {
-            529 // Gemma 3n ~529MB
+        return if (_isLoaded.value && !isUsingTemplates) {
+            529 // Real LLM model ~529MB
         } else {
-            0
+            0 // Templates use negligible memory
+        }
+    }
+
+    /**
+     * Get user-facing message about AI status
+     */
+    fun getAIStatusMessage(): String {
+        return if (isUsingTemplates) {
+            "Using curated skin care insights"
+        } else {
+            "Using on-device AI"
         }
     }
 }

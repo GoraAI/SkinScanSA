@@ -6,6 +6,7 @@ import com.skinscan.sa.data.db.dao.ScanResultDao
 import com.skinscan.sa.data.db.dao.UserProfileDao
 import com.skinscan.sa.data.db.entity.UserProfileEntity
 import com.skinscan.sa.data.ml.SkinAnalysisInference.SkinConcern
+import com.skinscan.sa.data.session.UserSessionManager
 import com.skinscan.sa.domain.usecase.DeleteAllUserDataUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,12 +26,12 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     private val userProfileDao: UserProfileDao,
     private val scanResultDao: ScanResultDao,
-    private val deleteAllUserDataUseCase: DeleteAllUserDataUseCase
+    private val deleteAllUserDataUseCase: DeleteAllUserDataUseCase,
+    private val userSessionManager: UserSessionManager
 ) : ViewModel() {
 
-    companion object {
-        private const val DEFAULT_USER_ID = "default_user"
-    }
+    private val userId: String
+        get() = userSessionManager.userId
 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -48,8 +49,8 @@ class ProfileViewModel @Inject constructor(
                 _uiState.value = ProfileUiState.Loading
 
                 val profile = userProfileDao.getProfileOnce() ?: createDefaultProfile()
-                val scanCount = scanResultDao.getCountByUser(DEFAULT_USER_ID)
-                val scans = scanResultDao.getAllByUserSync(DEFAULT_USER_ID)
+                val scanCount = scanResultDao.getCountByUser(userId)
+                val scans = scanResultDao.getAllByUserSync(userId)
 
                 // Calculate most common concern
                 val concernCounts = mutableMapOf<SkinConcern, Int>()
@@ -173,7 +174,7 @@ class ProfileViewModel @Inject constructor(
 
     private suspend fun createDefaultProfile(): UserProfileEntity {
         val profile = UserProfileEntity(
-            userId = DEFAULT_USER_ID,
+            userId = userId,
             popiaConsentGiven = true,
             popiaConsentDate = Date()
         )

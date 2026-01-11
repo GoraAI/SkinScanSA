@@ -25,6 +25,9 @@ datastore = "1.1.1"
 # SQLCipher
 sqlcipher = "4.6.1"
 
+# Security
+securityCrypto = "1.1.0-alpha06"
+
 # LiteRT / MediaPipe
 litert = "1.0.1"
 mediapipe = "0.10.18"
@@ -82,6 +85,9 @@ protobuf-javalite = { group = "com.google.protobuf", name = "protobuf-javalite",
 
 # SQLCipher
 sqlcipher-android = { group = "net.zetetic", name = "sqlcipher-android", version.ref = "sqlcipher" }
+
+# Security
+androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 
 # LiteRT / MediaPipe
 litert = { group = "com.google.ai.edge.litert", name = "litert", version.ref = "litert" }

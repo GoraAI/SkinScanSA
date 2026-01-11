@@ -9,6 +9,7 @@ import com.skinscan.sa.data.db.dao.ConsentAuditLogDao
 import com.skinscan.sa.data.db.dao.ProductDao
 import com.skinscan.sa.data.db.dao.ScanResultDao
 import com.skinscan.sa.data.db.dao.UserProfileDao
+import com.skinscan.sa.data.db.migrations.Migrations
 import com.skinscan.sa.data.encryption.EncryptionManager
 import com.skinscan.sa.data.local.ProductSeedData
 import dagger.Module
@@ -67,7 +68,7 @@ object DatabaseModule {
                 AppDatabase.DATABASE_NAME
             )
                 .openHelperFactory(factory)
-                .fallbackToDestructiveMigration() // For MVP - replace with proper migrations later
+                .addMigrations(*Migrations.ALL_MIGRATIONS)
                 .addCallback(ProductSeedCallback())
                 .build()
         } catch (e: Exception) {

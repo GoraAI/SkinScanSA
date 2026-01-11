@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.skinscan.sa.data.db.entity.ScanResultEntity
+import com.skinscan.sa.data.session.UserSessionManager
 import com.skinscan.sa.domain.repository.SkinAnalysisRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +24,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class ScanViewModel @Inject constructor(
-    private val skinAnalysisRepository: SkinAnalysisRepository
+    private val skinAnalysisRepository: SkinAnalysisRepository,
+    private val userSessionManager: UserSessionManager
 ) : ViewModel() {
 
     private val _capturedImage = MutableStateFlow<Bitmap?>(null)
@@ -43,13 +45,14 @@ class ScanViewModel @Inject constructor(
      * - After analysis completes, Bitmap is recycled and nulled
      * - Only ScanResult (no image data) persisted to encrypted DB
      */
-    fun analyzeFace(image: Bitmap, userId: String) {
+    fun analyzeFace(image: Bitmap) {
         viewModelScope.launch {
             _isAnalyzing.value = true
             _capturedImage.value = image // Store in RAM only
 
             try {
                 // Analyze face (in-memory processing only)
+                val userId = userSessionManager.userId
                 val result = skinAnalysisRepository.analyzeFace(image, userId)
                 _scanResult.value = result
 

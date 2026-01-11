@@ -95,6 +95,9 @@ dependencies {
     // SQLCipher
     implementation(libs.sqlcipher.android)
 
+    // Security (EncryptedSharedPreferences)
+    implementation(libs.androidx.security.crypto)
+
     // LiteRT / MediaPipe
     implementation(libs.litert)
     implementation(libs.litert.gpu)

@@ -2,6 +2,7 @@ package com.skinscan.sa.domain.usecase
 
 import com.skinscan.sa.data.db.dao.ScanResultDao
 import com.skinscan.sa.data.db.dao.UserProfileDao
+import com.skinscan.sa.data.session.UserSessionManager
 import javax.inject.Inject
 
 /**
@@ -15,12 +16,9 @@ import javax.inject.Inject
  */
 class DeleteAllUserDataUseCase @Inject constructor(
     private val userProfileDao: UserProfileDao,
-    private val scanResultDao: ScanResultDao
+    private val scanResultDao: ScanResultDao,
+    private val userSessionManager: UserSessionManager
 ) {
-    companion object {
-        private const val DEFAULT_USER_ID = "default_user"
-    }
-
     /**
      * Delete all user data from the app
      *
@@ -28,11 +26,16 @@ class DeleteAllUserDataUseCase @Inject constructor(
      */
     suspend fun execute(): Result<Unit> {
         return try {
+            val userId = userSessionManager.userId
+
             // Delete all scan results
-            scanResultDao.deleteAllByUser(DEFAULT_USER_ID)
+            scanResultDao.deleteAllByUser(userId)
 
             // Delete user profile
             userProfileDao.deleteAll()
+
+            // Clear session to generate new userId on next access
+            userSessionManager.clearSession()
 
             Result.success(Unit)
         } catch (e: Exception) {

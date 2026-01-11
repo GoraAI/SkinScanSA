@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.skinscan.sa.data.db.dao.ScanResultDao
 import com.skinscan.sa.data.db.entity.ScanResultEntity
 import com.skinscan.sa.data.ml.SkinAnalysisInference.SkinConcern
+import com.skinscan.sa.data.session.UserSessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,12 +22,12 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
-    private val scanResultDao: ScanResultDao
+    private val scanResultDao: ScanResultDao,
+    private val userSessionManager: UserSessionManager
 ) : ViewModel() {
 
-    companion object {
-        private const val DEFAULT_USER_ID = "default_user" // MVP single-user
-    }
+    private val userId: String
+        get() = userSessionManager.userId
 
     private val _uiState = MutableStateFlow<HistoryUiState>(HistoryUiState.Loading)
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
@@ -43,7 +44,7 @@ class HistoryViewModel @Inject constructor(
             try {
                 _uiState.value = HistoryUiState.Loading
 
-                scanResultDao.getAllByUser(DEFAULT_USER_ID).collect { scans ->
+                scanResultDao.getAllByUser(userId).collect { scans ->
                     val filteredScans = applyFilter(scans, _selectedFilter.value)
                     val scanItems = filteredScans.map { scan ->
                         ScanHistoryItem(
