@@ -38,12 +38,11 @@ class ModelDownloadManager @Inject constructor(
 
         // Gemma 3n E2B model info
         const val MODEL_NAME = "gemma-3n-E2B"
-        const val MODEL_FILE_NAME = "gemma-3n-E2B-it-int4.task"
+        const val MODEL_FILE_NAME = "gemma-3n-E2B-it-int4.litertlm"
         const val MODEL_SIZE_BYTES = 1_200_000_000L // ~1.2GB for E2B model
 
-        // Hugging Face URL for Gemma 3n E2B (requires HF token for gated model)
-        // Users need to accept license at: https://huggingface.co/google/gemma-3n-E2B-it-litert-lm
-        const val MODEL_URL = "https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/gemma3n-E2B-it-int4.task"
+        // Hugging Face URL for Gemma 3n E2B LiteRT model (public mirror)
+        const val MODEL_URL = "https://huggingface.co/na5h13/gemma-3n-E2B-it-litert-lm/resolve/main/gemma-3n-E2B-it-int4.litertlm"
 
         // SHA256 checksum for integrity verification (to be updated with actual checksum)
         const val MODEL_SHA256 = "" // Will be verified when downloading
