@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.skinscan.sa.data.db.entity.ScanResultEntity
+import com.skinscan.sa.data.session.ScanImageHolder
 import com.skinscan.sa.data.session.UserSessionManager
 import com.skinscan.sa.domain.repository.SkinAnalysisRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,15 +18,17 @@ import javax.inject.Inject
  * ViewModel for Scan Screen
  *
  * PRIVACY ARCHITECTURE (Story 6.3):
- * - Captured face image stored ONLY in RAM (MutableStateFlow<Bitmap?>)
+ * - Captured face image stored ONLY in RAM
+ * - Image held temporarily in ScanImageHolder for results display
  * - Image NEVER persisted to disk or cache
- * - After analysis, Bitmap is recycled and cleared from memory
+ * - Image cleared when leaving results screen
  * - Only ScanResult (derived data, no image) is saved to encrypted DB
  */
 @HiltViewModel
 class ScanViewModel @Inject constructor(
     private val skinAnalysisRepository: SkinAnalysisRepository,
-    private val userSessionManager: UserSessionManager
+    private val userSessionManager: UserSessionManager,
+    private val scanImageHolder: ScanImageHolder
 ) : ViewModel() {
 
     private val _capturedImage = MutableStateFlow<Bitmap?>(null)
@@ -42,7 +45,8 @@ class ScanViewModel @Inject constructor(
      *
      * Privacy guarantee:
      * - Bitmap stored in RAM only during processing
-     * - After analysis completes, Bitmap is recycled and nulled
+     * - Image held in ScanImageHolder for results display (temporary)
+     * - Image cleared when user leaves results screen
      * - Only ScanResult (no image data) persisted to encrypted DB
      */
     fun analyzeFace(image: Bitmap) {
@@ -56,9 +60,17 @@ class ScanViewModel @Inject constructor(
                 val result = skinAnalysisRepository.analyzeFace(image, userId)
                 _scanResult.value = result
 
-            } finally {
-                // CRITICAL: Clear image from memory after analysis
+                // Store image temporarily for results display (RAM only)
+                // Will be cleared when user leaves results screen
+                scanImageHolder.setImage(image, result.scanId)
+
+            } catch (e: Exception) {
+                // On error, clear the image immediately
                 _capturedImage.value?.recycle()
+                _capturedImage.value = null
+                throw e
+            } finally {
+                // Clear local reference (image now held by ScanImageHolder)
                 _capturedImage.value = null
                 _isAnalyzing.value = false
             }

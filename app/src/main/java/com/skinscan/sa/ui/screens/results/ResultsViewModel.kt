@@ -1,5 +1,6 @@
 package com.skinscan.sa.ui.screens.results
 
+import android.graphics.Bitmap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,6 +8,7 @@ import com.skinscan.sa.data.db.dao.ScanResultDao
 import com.skinscan.sa.data.db.entity.ScanResultEntity
 import com.skinscan.sa.data.ml.SkinAnalysisInference.FaceZone
 import com.skinscan.sa.data.ml.SkinAnalysisInference.SkinConcern
+import com.skinscan.sa.data.session.ScanImageHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,14 +22,35 @@ import javax.inject.Inject
  * ViewModel for Results Screen (Story 2.5)
  *
  * Loads and parses scan results from database
+ * Also provides temporary access to captured face image for zone visualization
  */
 @HiltViewModel
 class ResultsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val scanResultDao: ScanResultDao
+    private val scanResultDao: ScanResultDao,
+    private val scanImageHolder: ScanImageHolder
 ) : ViewModel() {
 
     private val scanId: String = savedStateHandle.get<String>("scanId") ?: ""
+
+    /**
+     * Get the captured face image if available (RAM only, not persisted)
+     * Returns null if viewing from history (image was cleared)
+     */
+    fun getCapturedImage(): Bitmap? = scanImageHolder.getImage(scanId)
+
+    /**
+     * Check if a captured image is available for this scan
+     */
+    fun hasLiveImage(): Boolean = scanImageHolder.hasImage(scanId)
+
+    /**
+     * Clear the captured image - call when leaving the results screen
+     * IMPORTANT: This ensures POPIA compliance by not keeping images in memory
+     */
+    fun clearCapturedImage() {
+        scanImageHolder.clear()
+    }
 
     private val _uiState = MutableStateFlow<ResultsUiState>(ResultsUiState.Loading)
     val uiState: StateFlow<ResultsUiState> = _uiState.asStateFlow()

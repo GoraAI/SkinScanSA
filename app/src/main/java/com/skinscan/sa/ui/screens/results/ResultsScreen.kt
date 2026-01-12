@@ -1,6 +1,8 @@
 package com.skinscan.sa.ui.screens.results
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +43,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,7 +56,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -80,6 +85,7 @@ import java.util.Locale
  * Results Screen - Glow Guide Design
  *
  * Displays skin analysis results with glassmorphism styling
+ * Shows captured face image with zone overlays (temporary, POPIA compliant)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,6 +97,17 @@ fun ResultsScreen(
     val uiState by viewModel.uiState.collectAsState()
     var selectedZone by remember { mutableStateOf<FaceZone?>(null) }
     val bottomSheetState = rememberModalBottomSheetState()
+
+    // Get captured image (only available for fresh scans, not from history)
+    val capturedImage = remember { viewModel.getCapturedImage() }
+    val hasLiveImage = remember { viewModel.hasLiveImage() }
+
+    // Clear captured image when leaving this screen (POPIA compliance)
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.clearCapturedImage()
+        }
+    }
 
     Scaffold(
         containerColor = DarkBackground,
@@ -162,6 +179,7 @@ fun ResultsScreen(
             is ResultsUiState.Success -> {
                 ResultsContent(
                     result = state.result,
+                    capturedImage = capturedImage,
                     onZoneSelected = { selectedZone = it },
                     onGetRecommendations = { onNavigateToRecommendations(state.result.scanId) },
                     modifier = Modifier.padding(paddingValues)
@@ -191,6 +209,7 @@ fun ResultsScreen(
 @Composable
 private fun ResultsContent(
     result: ParsedScanResult,
+    capturedImage: Bitmap?,
     onZoneSelected: (FaceZone) -> Unit,
     onGetRecommendations: () -> Unit,
     modifier: Modifier = Modifier
@@ -261,6 +280,7 @@ private fun ResultsContent(
 
         FaceZoneVisualization(
             zoneAnalysis = result.zoneAnalysis,
+            capturedImage = capturedImage,
             onZoneSelected = onZoneSelected
         )
 
@@ -442,6 +462,7 @@ private fun ConcernCard(
 @Composable
 private fun FaceZoneVisualization(
     zoneAnalysis: Map<FaceZone, Map<SkinConcern, Float>>,
+    capturedImage: Bitmap?,
     onZoneSelected: (FaceZone) -> Unit
 ) {
     GlassCard(modifier = Modifier.fillMaxWidth()) {
@@ -450,18 +471,38 @@ private fun FaceZoneVisualization(
                 .fillMaxWidth()
                 .aspectRatio(0.75f)
         ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val centerX = size.width / 2
-                val faceWidth = size.width * 0.7f
-                val faceHeight = size.height * 0.85f
-
-                // Draw face outline
-                drawOval(
-                    color = TealAccent.copy(alpha = 0.3f),
-                    topLeft = Offset(centerX - faceWidth / 2, size.height * 0.05f),
-                    size = Size(faceWidth, faceHeight),
-                    style = Stroke(width = 2.dp.toPx())
+            // Show captured face image if available, otherwise show outline
+            if (capturedImage != null) {
+                // Display the actual captured face image
+                Image(
+                    bitmap = capturedImage.asImageBitmap(),
+                    contentDescription = "Your face scan",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(16.dp)),
+                    contentScale = ContentScale.Crop
                 )
+                // Semi-transparent overlay for better zone button visibility
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(DarkBackground.copy(alpha = 0.3f))
+                )
+            } else {
+                // Fallback to abstract face outline (for history view)
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val centerX = size.width / 2
+                    val faceWidth = size.width * 0.7f
+                    val faceHeight = size.height * 0.85f
+
+                    // Draw face outline
+                    drawOval(
+                        color = TealAccent.copy(alpha = 0.3f),
+                        topLeft = Offset(centerX - faceWidth / 2, size.height * 0.05f),
+                        size = Size(faceWidth, faceHeight),
+                        style = Stroke(width = 2.dp.toPx())
+                    )
+                }
             }
 
             // Zone buttons overlaid on face - showing average concern level
