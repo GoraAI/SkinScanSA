@@ -685,7 +685,12 @@ private fun captureImage(
                 val mirroredBitmap = mirrorBitmap(bitmap)
                 bitmap.recycle()
 
-                onImageCaptured(mirroredBitmap)
+                // Crop to match the oval face guide region
+                // This ensures only the face (not shoulders/chest) is used for analysis
+                val croppedFaceBitmap = cropToFaceOval(mirroredBitmap)
+                mirroredBitmap.recycle()
+
+                onImageCaptured(croppedFaceBitmap)
             }
 
             override fun onError(exception: ImageCaptureException) {
@@ -727,4 +732,33 @@ private fun mirrorBitmap(bitmap: Bitmap): Bitmap {
         preScale(-1f, 1f)
     }
     return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+}
+
+/**
+ * Crop bitmap to match the oval face guide region
+ *
+ * The oval guide uses these proportions (from FaceGuideOverlay):
+ * - Width: 70% of screen width
+ * - Height: 45% of screen height
+ * - Position: centered horizontally, 15% from top
+ *
+ * We apply the same proportions to crop just the face area
+ */
+private fun cropToFaceOval(bitmap: Bitmap): Bitmap {
+    val bitmapWidth = bitmap.width
+    val bitmapHeight = bitmap.height
+
+    // Calculate crop region using same proportions as FaceGuideOverlay
+    val cropWidth = (bitmapWidth * 0.7f).toInt()
+    val cropHeight = (bitmapHeight * 0.45f).toInt()
+    val cropLeft = ((bitmapWidth - cropWidth) / 2f).toInt()
+    val cropTop = (bitmapHeight * 0.15f).toInt()
+
+    // Ensure we don't exceed bitmap bounds
+    val safeLeft = cropLeft.coerceIn(0, bitmapWidth - 1)
+    val safeTop = cropTop.coerceIn(0, bitmapHeight - 1)
+    val safeWidth = cropWidth.coerceAtMost(bitmapWidth - safeLeft)
+    val safeHeight = cropHeight.coerceAtMost(bitmapHeight - safeTop)
+
+    return Bitmap.createBitmap(bitmap, safeLeft, safeTop, safeWidth, safeHeight)
 }

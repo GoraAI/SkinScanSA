@@ -465,11 +465,14 @@ private fun FaceZoneVisualization(
     capturedImage: Bitmap?,
     onZoneSelected: (FaceZone) -> Unit
 ) {
+    // Aspect ratio matches the cropped face oval (width 0.7 / height 0.45 = ~1.56)
+    val faceAspectRatio = 0.7f / 0.45f
+
     GlassCard(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(0.75f)
+                .aspectRatio(faceAspectRatio)
         ) {
             // Show captured face image if available, otherwise show outline
             if (capturedImage != null) {
@@ -490,12 +493,13 @@ private fun FaceZoneVisualization(
                 )
             } else {
                 // Fallback to abstract face outline (for history view)
+                // Oval fills the container since it matches the cropped face proportions
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val centerX = size.width / 2
-                    val faceWidth = size.width * 0.7f
-                    val faceHeight = size.height * 0.85f
+                    val faceWidth = size.width * 0.85f
+                    val faceHeight = size.height * 0.9f
 
-                    // Draw face outline
+                    // Draw face outline centered in container
                     drawOval(
                         color = TealAccent.copy(alpha = 0.3f),
                         topLeft = Offset(centerX - faceWidth / 2, size.height * 0.05f),
@@ -505,36 +509,41 @@ private fun FaceZoneVisualization(
                 }
             }
 
-            // Zone buttons overlaid on face - showing average concern level
+            // Zone buttons overlaid on face - positioned to match facial regions
+            // Forehead: upper portion of face
             ZoneButton(
                 zone = FaceZone.FOREHEAD,
                 score = zoneAnalysis[FaceZone.FOREHEAD]?.values?.average()?.toFloat() ?: 0f,
                 onClick = { onZoneSelected(FaceZone.FOREHEAD) },
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 40.dp)
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 16.dp)
             )
+            // Left cheek: left side, slightly below center
             ZoneButton(
                 zone = FaceZone.LEFT_CHEEK,
                 score = zoneAnalysis[FaceZone.LEFT_CHEEK]?.values?.average()?.toFloat() ?: 0f,
                 onClick = { onZoneSelected(FaceZone.LEFT_CHEEK) },
-                modifier = Modifier.align(Alignment.CenterStart).padding(start = 20.dp)
+                modifier = Modifier.align(Alignment.CenterStart).padding(start = 8.dp, top = 24.dp)
             )
+            // Right cheek: right side, slightly below center
             ZoneButton(
                 zone = FaceZone.RIGHT_CHEEK,
                 score = zoneAnalysis[FaceZone.RIGHT_CHEEK]?.values?.average()?.toFloat() ?: 0f,
                 onClick = { onZoneSelected(FaceZone.RIGHT_CHEEK) },
-                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 20.dp)
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp, top = 24.dp)
             )
+            // Nose: center of face
             ZoneButton(
                 zone = FaceZone.NOSE,
                 score = zoneAnalysis[FaceZone.NOSE]?.values?.average()?.toFloat() ?: 0f,
                 onClick = { onZoneSelected(FaceZone.NOSE) },
                 modifier = Modifier.align(Alignment.Center)
             )
+            // Chin: bottom of face
             ZoneButton(
                 zone = FaceZone.CHIN,
                 score = zoneAnalysis[FaceZone.CHIN]?.values?.average()?.toFloat() ?: 0f,
                 onClick = { onZoneSelected(FaceZone.CHIN) },
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp)
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp)
             )
         }
     }
