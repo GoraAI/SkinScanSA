@@ -1,5 +1,7 @@
 package com.skinscan.sa.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.skinscan.sa.ui.theme.DarkBackground
 import com.skinscan.sa.ui.theme.GlassCard
@@ -63,6 +66,10 @@ fun PopiaConsentScreen(
     val biometricConsentChecked by viewModel.biometricConsentChecked.collectAsState()
     val analyticsConsentChecked by viewModel.analyticsConsentChecked.collectAsState()
     val isButtonEnabled by viewModel.isButtonEnabled.collectAsState()
+    val context = LocalContext.current
+
+    // Privacy policy URL - Update with actual hosted policy URL
+    val privacyPolicyUrl = "https://glowguide.co.za/privacy-policy"
 
     Box(
         modifier = Modifier
@@ -241,7 +248,10 @@ fun PopiaConsentScreen(
 
             // Privacy policy link
             TextButton(
-                onClick = { /* TODO: Open privacy policy */ },
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(privacyPolicyUrl))
+                    context.startActivity(intent)
+                },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
                 Text(

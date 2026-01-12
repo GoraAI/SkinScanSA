@@ -32,7 +32,7 @@ import com.skinscan.sa.data.db.entity.UserProfileEntity
         ConsentAuditLogEntity::class
     ],
     version = 5,
-    exportSchema = false // TODO: Enable schema export for production
+    exportSchema = true
 )
 @TypeConverters(DateConverters::class)
 abstract class AppDatabase : RoomDatabase() {

@@ -126,7 +126,7 @@ class SkinAnalysisRepositoryImpl @Inject constructor(
             confidenceScores = scoresObject.toString(),
             zoneAnalysis = zoneObject.toString(),
             recommendedProductIds = null, // Will be populated by recommendation engine
-            modelVersion = "efficientnet-lite-v1"
+            modelVersion = "mediapipe-landmarker-v1"
         )
     }
 
