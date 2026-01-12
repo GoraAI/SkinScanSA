@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -81,18 +84,28 @@ fun HomeScreen(
 
     Scaffold(
         containerColor = DarkBackground,
+        contentWindowInsets = WindowInsets(0),
         bottomBar = {
-            GlowGuideBottomNav(
-                selectedIndex = selectedNavItem,
-                onItemSelected = { index ->
-                    selectedNavItem = index
-                    when (index) {
-                        0 -> { /* Already on home */ }
-                        1 -> onNavigateToHistory()
-                        2 -> onNavigateToProfile()
+            Column {
+                GlowGuideBottomNav(
+                    selectedIndex = selectedNavItem,
+                    onItemSelected = { index ->
+                        selectedNavItem = index
+                        when (index) {
+                            0 -> { /* Already on home */ }
+                            1 -> onNavigateToHistory()
+                            2 -> onNavigateToProfile()
+                        }
                     }
-                }
-            )
+                )
+                // Add navigation bar padding
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
+                        .background(SurfaceBlack)
+                )
+            }
         }
     ) { paddingValues ->
         Column(

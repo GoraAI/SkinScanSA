@@ -5,6 +5,11 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.RectF
 import android.util.Log
+import com.google.mediapipe.framework.image.BitmapImageBuilder
+import com.google.mediapipe.tasks.core.BaseOptions
+import com.google.mediapipe.tasks.vision.core.RunningMode
+import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarker
+import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarkerResult
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,8 +25,8 @@ import kotlin.math.sqrt
  * - Estimates Fitzpatrick skin type (I-VI) from actual skin tone
  * - Zone-based analysis for 5 face regions
  *
- * Uses MediaPipe Face Detection for face localization and
- * pixel-based analysis for skin characteristics.
+ * Uses MediaPipe Face Landmarker for precise 478-point facial landmark detection
+ * and pixel-based analysis for skin characteristics.
  */
 @Singleton
 class SkinAnalysisInference @Inject constructor(
@@ -31,7 +36,18 @@ class SkinAnalysisInference @Inject constructor(
     companion object {
         private const val TAG = "SkinAnalysisInference"
         private const val SAMPLE_SIZE = 50 // Number of pixels to sample per region
+        private const val FACE_LANDMARKER_MODEL = "face_landmarker.task"
+
+        // MediaPipe Face Mesh landmark indices for each zone
+        // Reference: https://github.com/google/mediapipe/blob/master/mediapipe/modules/face_geometry/data/canonical_face_model_uv_visualization.png
+        val FOREHEAD_LANDMARKS = listOf(10, 67, 69, 104, 105, 108, 109, 151, 337, 338, 297, 299, 333, 334)
+        val LEFT_CHEEK_LANDMARKS = listOf(50, 101, 117, 118, 119, 100, 126, 142, 36, 205, 206, 207)
+        val RIGHT_CHEEK_LANDMARKS = listOf(280, 330, 346, 347, 348, 329, 355, 371, 266, 425, 426, 427)
+        val NOSE_LANDMARKS = listOf(1, 2, 4, 5, 6, 168, 197, 195, 45, 275)
+        val CHIN_LANDMARKS = listOf(152, 148, 149, 150, 175, 176, 177, 178, 379, 378, 377, 400)
     }
+
+    private var faceLandmarker: FaceLandmarker? = null
 
     private var isInitialized = false
 
@@ -73,9 +89,41 @@ class SkinAnalysisInference @Inject constructor(
      * Initialize the inference engine
      */
     fun initialize(): Boolean {
-        isInitialized = faceDetectionService.initialize()
-        Log.d(TAG, "Skin analysis inference initialized: $isInitialized")
+        // Initialize face detection service as fallback
+        val faceDetectInit = faceDetectionService.initialize()
+
+        // Initialize Face Landmarker for precise zone detection
+        val landmarkerInit = initializeFaceLandmarker()
+
+        isInitialized = landmarkerInit || faceDetectInit
+        Log.d(TAG, "Skin analysis inference initialized: $isInitialized (landmarker=$landmarkerInit, detector=$faceDetectInit)")
         return isInitialized
+    }
+
+    /**
+     * Initialize MediaPipe Face Landmarker
+     */
+    private fun initializeFaceLandmarker(): Boolean {
+        return try {
+            val baseOptions = BaseOptions.builder()
+                .setModelAssetPath(FACE_LANDMARKER_MODEL)
+                .build()
+
+            val options = FaceLandmarker.FaceLandmarkerOptions.builder()
+                .setBaseOptions(baseOptions)
+                .setNumFaces(1)
+                .setMinFaceDetectionConfidence(0.5f)
+                .setMinTrackingConfidence(0.5f)
+                .setRunningMode(RunningMode.IMAGE)
+                .build()
+
+            faceLandmarker = FaceLandmarker.createFromOptions(context, options)
+            Log.d(TAG, "Face Landmarker initialized successfully")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize Face Landmarker", e)
+            false
+        }
     }
 
     /**
@@ -87,7 +135,15 @@ class SkinAnalysisInference @Inject constructor(
     fun analyze(bitmap: Bitmap): SkinAnalysisResult {
         Log.d(TAG, "Analyzing face image (${bitmap.width}x${bitmap.height})")
 
-        // Detect face to get bounding box
+        // Try Face Landmarker first for precise zone detection
+        val landmarkerResult = runFaceLandmarker(bitmap)
+        if (landmarkerResult != null && landmarkerResult.faceLandmarks().isNotEmpty()) {
+            Log.d(TAG, "Using Face Landmarker for precise zone analysis")
+            return analyzeWithLandmarks(bitmap, landmarkerResult)
+        }
+
+        // Fallback to face detection
+        Log.d(TAG, "Face Landmarker unavailable, using face detection fallback")
         val faceResult = faceDetectionService.detectFace(bitmap)
 
         return if (faceResult.faceDetected && faceResult.boundingBox != null) {
@@ -103,6 +159,103 @@ class SkinAnalysisInference @Inject constructor(
             )
             analyzeWithFaceRegion(bitmap, centerBox)
         }
+    }
+
+    /**
+     * Run Face Landmarker detection
+     */
+    private fun runFaceLandmarker(bitmap: Bitmap): FaceLandmarkerResult? {
+        val landmarker = faceLandmarker ?: return null
+        return try {
+            val mpImage = BitmapImageBuilder(bitmap).build()
+            landmarker.detect(mpImage)
+        } catch (e: Exception) {
+            Log.e(TAG, "Face Landmarker detection failed", e)
+            null
+        }
+    }
+
+    /**
+     * Analyze face using precise 478-point landmarks
+     */
+    private fun analyzeWithLandmarks(bitmap: Bitmap, result: FaceLandmarkerResult): SkinAnalysisResult {
+        val landmarks = result.faceLandmarks()[0]
+        val imageWidth = bitmap.width
+        val imageHeight = bitmap.height
+
+        // Extract precise zones from landmarks
+        val zones = mapOf(
+            FaceZone.FOREHEAD to extractZoneFromLandmarks(landmarks, FOREHEAD_LANDMARKS, imageWidth, imageHeight),
+            FaceZone.LEFT_CHEEK to extractZoneFromLandmarks(landmarks, LEFT_CHEEK_LANDMARKS, imageWidth, imageHeight),
+            FaceZone.RIGHT_CHEEK to extractZoneFromLandmarks(landmarks, RIGHT_CHEEK_LANDMARKS, imageWidth, imageHeight),
+            FaceZone.NOSE to extractZoneFromLandmarks(landmarks, NOSE_LANDMARKS, imageWidth, imageHeight),
+            FaceZone.CHIN to extractZoneFromLandmarks(landmarks, CHIN_LANDMARKS, imageWidth, imageHeight)
+        )
+
+        // Analyze Fitzpatrick type from cheek regions
+        val leftCheekZone = zones[FaceZone.LEFT_CHEEK]!!
+        val rightCheekZone = zones[FaceZone.RIGHT_CHEEK]!!
+        val (fitzpatrickType, fitzConfidence) = analyzeFitzpatrickType(
+            bitmap, leftCheekZone, rightCheekZone
+        )
+
+        // Analyze each zone for concerns
+        val zoneAnalysis = mutableMapOf<FaceZone, Map<SkinConcern, Float>>()
+        zones.forEach { (zone, bounds) ->
+            zoneAnalysis[zone] = analyzeZoneConcerns(bitmap, bounds)
+        }
+
+        // Calculate overall concerns
+        val overallConcerns = calculateOverallConcerns(zoneAnalysis)
+
+        // Determine primary concerns
+        val primaryConcerns = overallConcerns.entries
+            .filter { it.value > 0.5f }
+            .sortedByDescending { it.value }
+            .map { it.key }
+            .take(3)
+
+        Log.d(TAG, "Landmark analysis complete - Fitzpatrick: $fitzpatrickType, Primary concerns: $primaryConcerns")
+
+        return SkinAnalysisResult(
+            overallConcerns = overallConcerns,
+            fitzpatrickType = fitzpatrickType,
+            fitzpatrickConfidence = fitzConfidence,
+            zoneAnalysis = zoneAnalysis,
+            primaryConcerns = primaryConcerns
+        )
+    }
+
+    /**
+     * Extract a zone bounding box from landmark indices
+     */
+    private fun extractZoneFromLandmarks(
+        landmarks: List<com.google.mediapipe.tasks.components.containers.NormalizedLandmark>,
+        indices: List<Int>,
+        imageWidth: Int,
+        imageHeight: Int
+    ): RectF {
+        val validIndices = indices.filter { it < landmarks.size }
+        if (validIndices.isEmpty()) {
+            return RectF(0f, 0f, imageWidth.toFloat(), imageHeight.toFloat())
+        }
+
+        val points = validIndices.map { landmarks[it] }
+        val minX = points.minOf { it.x() } * imageWidth
+        val maxX = points.maxOf { it.x() } * imageWidth
+        val minY = points.minOf { it.y() } * imageHeight
+        val maxY = points.maxOf { it.y() } * imageHeight
+
+        // Add padding to zone
+        val paddingX = (maxX - minX) * 0.1f
+        val paddingY = (maxY - minY) * 0.1f
+
+        return RectF(
+            (minX - paddingX).coerceAtLeast(0f),
+            (minY - paddingY).coerceAtLeast(0f),
+            (maxX + paddingX).coerceAtMost(imageWidth.toFloat()),
+            (maxY + paddingY).coerceAtMost(imageHeight.toFloat())
+        )
     }
 
     /**
@@ -304,7 +457,14 @@ class SkinAnalysisInference @Inject constructor(
     }
 
     /**
-     * Analyze zone for skin concerns
+     * Analyze zone for skin concerns using enhanced algorithms
+     *
+     * Implements:
+     * - Color uniformity analysis for hyperpigmentation
+     * - Specular highlight detection for oiliness
+     * - Texture variance (simulated Laplacian) for dryness
+     * - Red channel analysis for acne/inflammation
+     * - Gradient variance for wrinkle detection
      */
     private fun analyzeZoneConcerns(bitmap: Bitmap, zone: RectF): Map<SkinConcern, Float> {
         val samples = samplePixels(bitmap, zone)
@@ -322,34 +482,73 @@ class SkinAnalysisInference @Inject constructor(
         val stdLuminance = calculateStdDev(luminances)
         val avgRed = reds.average()
         val avgGreen = greens.average()
+        val avgBlue = blues.average()
 
-        // Hyperpigmentation: High variance in luminance indicates uneven tone
-        val hyperpigmentation = (stdLuminance / 30.0).coerceIn(0.0, 1.0).toFloat()
+        // Enhanced concern detection algorithms
 
-        // Oiliness: High luminance with low variance (shiny/reflective)
-        val oiliness = if (avgLuminance > 150 && stdLuminance < 20) {
-            ((avgLuminance - 150) / 100.0).coerceIn(0.0, 1.0).toFloat()
-        } else {
-            0.2f
+        // 1. HYPERPIGMENTATION: Color uniformity analysis
+        // Detect uneven skin tone by measuring color deviation from mean
+        val colorDeviations = samples.map { pixel ->
+            val r = Color.red(pixel)
+            val g = Color.green(pixel)
+            val b = Color.blue(pixel)
+            sqrt(
+                (r - avgRed).pow(2.0) +
+                (g - avgGreen).pow(2.0) +
+                (b - avgBlue).pow(2.0)
+            )
+        }
+        val colorUniformity = colorDeviations.average()
+        val hyperpigmentation = (colorUniformity / 40.0).coerceIn(0.1, 1.0).toFloat()
+
+        // 2. OILINESS: Specular highlight detection
+        // Detect shiny/reflective areas by counting bright spots
+        val brightnessThreshold = 200.0
+        val specularCount = luminances.count { it > brightnessThreshold }
+        val specularRatio = specularCount.toDouble() / samples.size
+        val highlightIntensity = luminances.filter { it > brightnessThreshold }
+            .takeIf { it.isNotEmpty() }?.average() ?: 0.0
+        val oiliness = when {
+            specularRatio > 0.15 -> ((specularRatio * 3 + (highlightIntensity - 200) / 55.0) / 2).coerceIn(0.3, 1.0).toFloat()
+            specularRatio > 0.05 -> (specularRatio * 5).coerceIn(0.2, 0.7).toFloat()
+            avgLuminance > 180 && stdLuminance < 15 -> 0.4f
+            else -> 0.15f
         }
 
-        // Dryness: Low luminance with high texture variance
-        val dryness = if (avgLuminance < 130 && stdLuminance > 15) {
-            (stdLuminance / 40.0).coerceIn(0.0, 1.0).toFloat()
-        } else {
-            0.2f
+        // 3. DRYNESS: Texture variance analysis (simulated Laplacian variance)
+        // Higher local variance indicates rough/dry texture
+        val textureVariance = calculateLocalVariance(luminances)
+        val dryness = when {
+            textureVariance > 400 && avgLuminance < 140 -> (textureVariance / 600.0).coerceIn(0.4, 1.0).toFloat()
+            textureVariance > 200 -> (textureVariance / 800.0).coerceIn(0.2, 0.6).toFloat()
+            avgLuminance < 100 -> 0.35f
+            else -> 0.1f
         }
 
-        // Acne: Red spots (high red channel relative to green)
-        val redness = (avgRed - avgGreen) / 255.0
-        val acne = if (redness > 0.05) {
-            (redness * 3).coerceIn(0.0, 1.0).toFloat()
-        } else {
-            0.15f
+        // 4. ACNE: Red channel analysis for inflammation
+        // Detect red spots by analyzing red-to-green ratio and local red peaks
+        val redGreenRatios = samples.mapIndexed { i, _ ->
+            if (greens[i] > 0) reds[i].toDouble() / greens[i] else 0.0
+        }
+        val highRedCount = redGreenRatios.count { it > 1.15 }
+        val highRedRatio = highRedCount.toDouble() / samples.size
+        val avgRedGreenDiff = (avgRed - avgGreen) / 255.0
+        val acne = when {
+            highRedRatio > 0.2 && avgRedGreenDiff > 0.08 -> ((highRedRatio * 2 + avgRedGreenDiff * 5) / 2).coerceIn(0.5, 1.0).toFloat()
+            highRedRatio > 0.1 -> (highRedRatio * 4 + avgRedGreenDiff * 3).coerceIn(0.3, 0.8).toFloat()
+            avgRedGreenDiff > 0.05 -> (avgRedGreenDiff * 5).coerceIn(0.2, 0.5).toFloat()
+            else -> 0.1f
         }
 
-        // Wrinkles: High local variance (texture lines) - simplified detection
-        val wrinkles = (stdLuminance / 50.0).coerceIn(0.0, 0.6).toFloat()
+        // 5. WRINKLES: Enhanced texture line detection
+        // Use gradient variance to detect fine lines
+        val gradientVariance = calculateGradientVariance(luminances)
+        val wrinkles = when {
+            gradientVariance > 300 -> (gradientVariance / 500.0).coerceIn(0.4, 0.9).toFloat()
+            gradientVariance > 150 -> (gradientVariance / 600.0).coerceIn(0.2, 0.5).toFloat()
+            stdLuminance > 25 -> (stdLuminance / 60.0).coerceIn(0.1, 0.4).toFloat()
+            else -> 0.05f
+        }
 
         return mapOf(
             SkinConcern.HYPERPIGMENTATION to hyperpigmentation,
@@ -399,6 +598,54 @@ class SkinAnalysisInference @Inject constructor(
     }
 
     /**
+     * Calculate local variance (simulated Laplacian variance)
+     * Measures texture roughness by comparing each value to its neighbors
+     */
+    private fun calculateLocalVariance(values: List<Double>): Double {
+        if (values.size < 3) return 0.0
+
+        // Simulate local Laplacian by computing differences between adjacent samples
+        val laplacianValues = mutableListOf<Double>()
+        val gridSize = sqrt(values.size.toDouble()).toInt()
+
+        for (i in values.indices) {
+            val neighbors = mutableListOf<Double>()
+
+            // Get neighboring values (up, down, left, right)
+            if (i >= gridSize) neighbors.add(values[i - gridSize])
+            if (i < values.size - gridSize) neighbors.add(values[i + gridSize])
+            if (i % gridSize > 0) neighbors.add(values[i - 1])
+            if (i % gridSize < gridSize - 1 && i + 1 < values.size) neighbors.add(values[i + 1])
+
+            if (neighbors.isNotEmpty()) {
+                val laplacian = abs(values[i] * neighbors.size - neighbors.sum())
+                laplacianValues.add(laplacian)
+            }
+        }
+
+        if (laplacianValues.isEmpty()) return 0.0
+
+        val mean = laplacianValues.average()
+        return laplacianValues.map { (it - mean).pow(2.0) }.average()
+    }
+
+    /**
+     * Calculate gradient variance for wrinkle detection
+     * Measures directional changes in luminance which indicate fine lines
+     */
+    private fun calculateGradientVariance(values: List<Double>): Double {
+        if (values.size < 2) return 0.0
+
+        // Calculate gradients (differences between consecutive samples)
+        val gradients = values.zipWithNext { a, b -> abs(b - a) }
+
+        if (gradients.isEmpty()) return 0.0
+
+        val mean = gradients.average()
+        return gradients.map { (it - mean).pow(2.0) }.average()
+    }
+
+    /**
      * Calculate overall concerns from zone analysis
      */
     private fun calculateOverallConcerns(
@@ -422,6 +669,12 @@ class SkinAnalysisInference @Inject constructor(
      * Release resources
      */
     fun close() {
+        try {
+            faceLandmarker?.close()
+            faceLandmarker = null
+        } catch (e: Exception) {
+            Log.w(TAG, "Error closing Face Landmarker: ${e.message}")
+        }
         faceDetectionService.close()
         isInitialized = false
         Log.d(TAG, "Skin analysis inference closed")

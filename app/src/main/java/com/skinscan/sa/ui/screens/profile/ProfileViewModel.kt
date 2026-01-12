@@ -6,6 +6,7 @@ import com.skinscan.sa.data.db.dao.ScanResultDao
 import com.skinscan.sa.data.db.dao.UserProfileDao
 import com.skinscan.sa.data.db.entity.UserProfileEntity
 import com.skinscan.sa.data.ml.SkinAnalysisInference.SkinConcern
+import com.skinscan.sa.data.ml.llm.ModelDownloadManager
 import com.skinscan.sa.data.session.UserSessionManager
 import com.skinscan.sa.domain.usecase.DeleteAllUserDataUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,7 +28,8 @@ class ProfileViewModel @Inject constructor(
     private val userProfileDao: UserProfileDao,
     private val scanResultDao: ScanResultDao,
     private val deleteAllUserDataUseCase: DeleteAllUserDataUseCase,
-    private val userSessionManager: UserSessionManager
+    private val userSessionManager: UserSessionManager,
+    val modelDownloadManager: ModelDownloadManager
 ) : ViewModel() {
 
     private val userId: String
@@ -39,8 +41,35 @@ class ProfileViewModel @Inject constructor(
     private val _deleteConfirmation = MutableStateFlow(false)
     val deleteConfirmation: StateFlow<Boolean> = _deleteConfirmation.asStateFlow()
 
+    // Model download state exposed from ModelDownloadManager
+    val downloadState = modelDownloadManager.downloadState
+    val modelAvailable = modelDownloadManager.modelAvailable
+
     init {
         loadProfile()
+    }
+
+    /**
+     * Start AI model download
+     */
+    fun downloadAIModel(wifiOnly: Boolean = true) {
+        viewModelScope.launch {
+            modelDownloadManager.downloadModel(wifiOnly)
+        }
+    }
+
+    /**
+     * Delete downloaded AI model
+     */
+    fun deleteAIModel() {
+        modelDownloadManager.deleteModel()
+    }
+
+    /**
+     * Skip model download (use templates)
+     */
+    fun skipModelDownload() {
+        modelDownloadManager.skipDownload()
     }
 
     fun loadProfile() {

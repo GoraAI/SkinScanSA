@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,6 +24,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Warning
@@ -32,6 +38,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -62,6 +69,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.skinscan.sa.data.ml.SkinAnalysisInference.SkinConcern
+import com.skinscan.sa.data.ml.llm.ModelDownloadManager
 import com.skinscan.sa.ui.theme.Coral400
 import com.skinscan.sa.ui.theme.DarkBackground
 import com.skinscan.sa.ui.theme.ErrorRed
@@ -92,6 +100,8 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val showDeleteConfirmation by viewModel.deleteConfirmation.collectAsState()
+    val downloadState by viewModel.downloadState.collectAsState(initial = ModelDownloadManager.DownloadState.Idle)
+    val modelAvailable by viewModel.modelAvailable.collectAsState(initial = false)
 
     // Edit sheet states
     var showConcernsSheet by remember { mutableStateOf(false) }
@@ -156,11 +166,16 @@ fun ProfileScreen(
             is ProfileUiState.Success -> {
                 ProfileContent(
                     state = state,
+                    downloadState = downloadState,
+                    modelAvailable = modelAvailable,
                     onEditConcerns = { showConcernsSheet = true },
                     onEditBudget = { showBudgetSheet = true },
                     onEditLocation = { showLocationSheet = true },
                     onEditAllergies = { showAllergiesSheet = true },
+                    onDownloadModel = { viewModel.downloadAIModel() },
+                    onDeleteModel = { viewModel.deleteAIModel() },
                     onDeleteData = { viewModel.showDeleteConfirmation() },
+                    modelSizeFormatted = viewModel.modelDownloadManager.formatBytes(ModelDownloadManager.MODEL_SIZE_BYTES),
                     modifier = Modifier.padding(paddingValues)
                 )
 
@@ -224,11 +239,16 @@ fun ProfileScreen(
 @Composable
 private fun ProfileContent(
     state: ProfileUiState.Success,
+    downloadState: ModelDownloadManager.DownloadState,
+    modelAvailable: Boolean,
     onEditConcerns: () -> Unit,
     onEditBudget: () -> Unit,
     onEditLocation: () -> Unit,
     onEditAllergies: () -> Unit,
+    onDownloadModel: () -> Unit,
+    onDeleteModel: () -> Unit,
     onDeleteData: () -> Unit,
+    modelSizeFormatted: String,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -303,6 +323,26 @@ private fun ProfileContent(
                 title = "Known Allergies",
                 value = state.allergies ?: "None",
                 onEdit = onEditAllergies
+            )
+        }
+
+        // AI Model Section
+        item {
+            Spacer(modifier = Modifier.height(Spacing.s))
+            Text(
+                text = "AI Model",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        item {
+            AIModelCard(
+                downloadState = downloadState,
+                modelAvailable = modelAvailable,
+                modelSize = modelSizeFormatted,
+                onDownload = onDownloadModel,
+                onDelete = onDeleteModel
             )
         }
 
@@ -402,6 +442,8 @@ private fun ProfileContent(
 
         item {
             Spacer(modifier = Modifier.height(Spacing.xl))
+            // Add navigation bar padding
+            Spacer(modifier = Modifier.height(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
         }
     }
 }
@@ -469,6 +511,142 @@ private fun ScanStatsCard(stats: ScanStatistics) {
                 StatRow("Last Scan", if (it == 0) "Today" else "$it days ago")
             }
         }
+    }
+}
+
+@Composable
+private fun AIModelCard(
+    downloadState: ModelDownloadManager.DownloadState,
+    modelAvailable: Boolean,
+    modelSize: String,
+    onDownload: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(Spacing.m),
+            verticalArrangement = Arrangement.spacedBy(Spacing.s)
+        ) {
+            // Status row
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = when {
+                        modelAvailable -> Icons.Default.CloudDone
+                        downloadState is ModelDownloadManager.DownloadState.Downloading -> Icons.Default.CloudDownload
+                        else -> Icons.Default.Cloud
+                    },
+                    contentDescription = null,
+                    tint = when {
+                        modelAvailable -> Teal600
+                        downloadState is ModelDownloadManager.DownloadState.Error -> Coral400
+                        else -> TextSecondary
+                    },
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(Spacing.s))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Gemma 3n E2B",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = when {
+                            modelAvailable -> "AI Ready - Enhanced explanations enabled"
+                            downloadState is ModelDownloadManager.DownloadState.Downloading -> "Downloading..."
+                            downloadState is ModelDownloadManager.DownloadState.Verifying -> "Verifying..."
+                            downloadState is ModelDownloadManager.DownloadState.Error -> downloadState.message
+                            else -> "Not downloaded ($modelSize)"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = when {
+                            downloadState is ModelDownloadManager.DownloadState.Error -> Coral400
+                            else -> TextSecondary
+                        }
+                    )
+                }
+            }
+
+            // Progress bar when downloading
+            if (downloadState is ModelDownloadManager.DownloadState.Downloading) {
+                LinearProgressIndicator(
+                    progress = { downloadState.progress },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = TealAccent
+                )
+                Text(
+                    text = "${(downloadState.progress * 100).toInt()}% - ${formatBytes(downloadState.bytesDownloaded)} / ${formatBytes(downloadState.totalBytes)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary
+                )
+            }
+
+            // Action buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.s)
+            ) {
+                if (modelAvailable) {
+                    OutlinedButton(
+                        onClick = onDelete,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Coral400
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.xs))
+                        Text("Delete Model")
+                    }
+                } else if (downloadState !is ModelDownloadManager.DownloadState.Downloading &&
+                    downloadState !is ModelDownloadManager.DownloadState.Verifying) {
+                    Button(
+                        onClick = onDownload,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = TealAccent,
+                            contentColor = DarkBackground
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CloudDownload,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.xs))
+                        Text("Download AI Model")
+                    }
+                }
+            }
+
+            // Info text
+            Text(
+                text = "The AI model enables enhanced skin care explanations. Without it, the app uses curated insights.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
+            )
+        }
+    }
+}
+
+private fun formatBytes(bytes: Long): String {
+    return when {
+        bytes >= 1_000_000_000 -> "%.1f GB".format(bytes / 1_000_000_000.0)
+        bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
+        bytes >= 1_000 -> "%.1f KB".format(bytes / 1_000.0)
+        else -> "$bytes B"
     }
 }
 
@@ -551,6 +729,8 @@ private fun ConcernsEditSheet(
             }
 
             Spacer(modifier = Modifier.height(Spacing.xl))
+            // Add navigation bar padding
+            Spacer(modifier = Modifier.height(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
         }
     }
 }
@@ -619,6 +799,8 @@ private fun BudgetEditSheet(
             }
 
             Spacer(modifier = Modifier.height(Spacing.xl))
+            // Add navigation bar padding
+            Spacer(modifier = Modifier.height(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
         }
     }
 }
@@ -689,6 +871,8 @@ private fun LocationEditSheet(
             }
 
             Spacer(modifier = Modifier.height(Spacing.xl))
+            // Add navigation bar padding
+            Spacer(modifier = Modifier.height(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
         }
     }
 }
@@ -745,6 +929,8 @@ private fun AllergiesEditSheet(
             }
 
             Spacer(modifier = Modifier.height(Spacing.xl))
+            // Add navigation bar padding
+            Spacer(modifier = Modifier.height(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()))
         }
     }
 }
