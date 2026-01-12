@@ -31,8 +31,7 @@ class LLMInference @Inject constructor(
     companion object {
         private const val TAG = "LLMInference"
         private const val UNLOAD_DELAY_MS = 30_000L // 30 seconds idle before unload
-        private const val MAX_TOKENS = 256
-        private const val TEMPERATURE = 0.8f
+        private const val MAX_TOKENS = 1024
     }
 
     // MediaPipe LLM Inference instance
@@ -102,7 +101,6 @@ class LLMInference @Inject constructor(
                 val options = LlmInferenceOptions.builder()
                     .setModelPath(modelPath)
                     .setMaxTokens(MAX_TOKENS)
-                    .setTemperature(TEMPERATURE)
                     .build()
 
                 llmInference = MediaPipeLlmInference.createFromOptions(context, options)
