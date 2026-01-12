@@ -484,7 +484,8 @@ class SkinAnalysisInference @Inject constructor(
         val avgGreen = greens.average()
         val avgBlue = blues.average()
 
-        // Enhanced concern detection algorithms
+        // Enhanced concern detection algorithms with calibrated ranges
+        // Values now range from 0.05 to 0.85 for realistic skin analysis
 
         // 1. HYPERPIGMENTATION: Color uniformity analysis
         // Detect uneven skin tone by measuring color deviation from mean
@@ -499,30 +500,33 @@ class SkinAnalysisInference @Inject constructor(
             )
         }
         val colorUniformity = colorDeviations.average()
-        val hyperpigmentation = (colorUniformity / 40.0).coerceIn(0.1, 1.0).toFloat()
+        // Calibrated: divide by 80 instead of 40 for more gradual scaling
+        val hyperpigmentation = (colorUniformity / 80.0).coerceIn(0.05, 0.75).toFloat()
 
         // 2. OILINESS: Specular highlight detection
         // Detect shiny/reflective areas by counting bright spots
-        val brightnessThreshold = 200.0
+        val brightnessThreshold = 210.0 // Raised threshold for more specificity
         val specularCount = luminances.count { it > brightnessThreshold }
         val specularRatio = specularCount.toDouble() / samples.size
         val highlightIntensity = luminances.filter { it > brightnessThreshold }
             .takeIf { it.isNotEmpty() }?.average() ?: 0.0
         val oiliness = when {
-            specularRatio > 0.15 -> ((specularRatio * 3 + (highlightIntensity - 200) / 55.0) / 2).coerceIn(0.3, 1.0).toFloat()
-            specularRatio > 0.05 -> (specularRatio * 5).coerceIn(0.2, 0.7).toFloat()
-            avgLuminance > 180 && stdLuminance < 15 -> 0.4f
-            else -> 0.15f
+            specularRatio > 0.20 -> ((specularRatio * 2 + (highlightIntensity - 210) / 80.0) / 2).coerceIn(0.4, 0.80).toFloat()
+            specularRatio > 0.10 -> (specularRatio * 3).coerceIn(0.25, 0.55).toFloat()
+            specularRatio > 0.03 -> (specularRatio * 4).coerceIn(0.12, 0.35).toFloat()
+            avgLuminance > 190 && stdLuminance < 12 -> 0.30f
+            else -> 0.08f
         }
 
         // 3. DRYNESS: Texture variance analysis (simulated Laplacian variance)
         // Higher local variance indicates rough/dry texture
         val textureVariance = calculateLocalVariance(luminances)
         val dryness = when {
-            textureVariance > 400 && avgLuminance < 140 -> (textureVariance / 600.0).coerceIn(0.4, 1.0).toFloat()
-            textureVariance > 200 -> (textureVariance / 800.0).coerceIn(0.2, 0.6).toFloat()
-            avgLuminance < 100 -> 0.35f
-            else -> 0.1f
+            textureVariance > 500 && avgLuminance < 130 -> (textureVariance / 900.0).coerceIn(0.35, 0.75).toFloat()
+            textureVariance > 300 -> (textureVariance / 1000.0).coerceIn(0.20, 0.50).toFloat()
+            textureVariance > 150 -> (textureVariance / 1200.0).coerceIn(0.10, 0.30).toFloat()
+            avgLuminance < 90 -> 0.25f
+            else -> 0.05f
         }
 
         // 4. ACNE: Red channel analysis for inflammation
@@ -530,24 +534,26 @@ class SkinAnalysisInference @Inject constructor(
         val redGreenRatios = samples.mapIndexed { i, _ ->
             if (greens[i] > 0) reds[i].toDouble() / greens[i] else 0.0
         }
-        val highRedCount = redGreenRatios.count { it > 1.15 }
+        val highRedCount = redGreenRatios.count { it > 1.20 } // Raised threshold
         val highRedRatio = highRedCount.toDouble() / samples.size
         val avgRedGreenDiff = (avgRed - avgGreen) / 255.0
         val acne = when {
-            highRedRatio > 0.2 && avgRedGreenDiff > 0.08 -> ((highRedRatio * 2 + avgRedGreenDiff * 5) / 2).coerceIn(0.5, 1.0).toFloat()
-            highRedRatio > 0.1 -> (highRedRatio * 4 + avgRedGreenDiff * 3).coerceIn(0.3, 0.8).toFloat()
-            avgRedGreenDiff > 0.05 -> (avgRedGreenDiff * 5).coerceIn(0.2, 0.5).toFloat()
-            else -> 0.1f
+            highRedRatio > 0.25 && avgRedGreenDiff > 0.10 -> ((highRedRatio * 1.5 + avgRedGreenDiff * 3) / 2).coerceIn(0.45, 0.80).toFloat()
+            highRedRatio > 0.15 -> (highRedRatio * 2.5 + avgRedGreenDiff * 2).coerceIn(0.25, 0.60).toFloat()
+            highRedRatio > 0.08 -> (highRedRatio * 3).coerceIn(0.15, 0.40).toFloat()
+            avgRedGreenDiff > 0.06 -> (avgRedGreenDiff * 3).coerceIn(0.10, 0.30).toFloat()
+            else -> 0.05f
         }
 
         // 5. WRINKLES: Enhanced texture line detection
         // Use gradient variance to detect fine lines
         val gradientVariance = calculateGradientVariance(luminances)
         val wrinkles = when {
-            gradientVariance > 300 -> (gradientVariance / 500.0).coerceIn(0.4, 0.9).toFloat()
-            gradientVariance > 150 -> (gradientVariance / 600.0).coerceIn(0.2, 0.5).toFloat()
-            stdLuminance > 25 -> (stdLuminance / 60.0).coerceIn(0.1, 0.4).toFloat()
-            else -> 0.05f
+            gradientVariance > 400 -> (gradientVariance / 700.0).coerceIn(0.35, 0.70).toFloat()
+            gradientVariance > 250 -> (gradientVariance / 800.0).coerceIn(0.20, 0.45).toFloat()
+            gradientVariance > 120 -> (gradientVariance / 900.0).coerceIn(0.10, 0.30).toFloat()
+            stdLuminance > 30 -> (stdLuminance / 80.0).coerceIn(0.08, 0.25).toFloat()
+            else -> 0.03f
         }
 
         return mapOf(

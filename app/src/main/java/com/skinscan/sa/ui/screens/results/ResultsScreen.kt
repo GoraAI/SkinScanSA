@@ -464,34 +464,34 @@ private fun FaceZoneVisualization(
                 )
             }
 
-            // Zone buttons overlaid on face
+            // Zone buttons overlaid on face - showing average concern level
             ZoneButton(
                 zone = FaceZone.FOREHEAD,
-                score = zoneAnalysis[FaceZone.FOREHEAD]?.values?.maxOrNull() ?: 0f,
+                score = zoneAnalysis[FaceZone.FOREHEAD]?.values?.average()?.toFloat() ?: 0f,
                 onClick = { onZoneSelected(FaceZone.FOREHEAD) },
                 modifier = Modifier.align(Alignment.TopCenter).padding(top = 40.dp)
             )
             ZoneButton(
                 zone = FaceZone.LEFT_CHEEK,
-                score = zoneAnalysis[FaceZone.LEFT_CHEEK]?.values?.maxOrNull() ?: 0f,
+                score = zoneAnalysis[FaceZone.LEFT_CHEEK]?.values?.average()?.toFloat() ?: 0f,
                 onClick = { onZoneSelected(FaceZone.LEFT_CHEEK) },
                 modifier = Modifier.align(Alignment.CenterStart).padding(start = 20.dp)
             )
             ZoneButton(
                 zone = FaceZone.RIGHT_CHEEK,
-                score = zoneAnalysis[FaceZone.RIGHT_CHEEK]?.values?.maxOrNull() ?: 0f,
+                score = zoneAnalysis[FaceZone.RIGHT_CHEEK]?.values?.average()?.toFloat() ?: 0f,
                 onClick = { onZoneSelected(FaceZone.RIGHT_CHEEK) },
                 modifier = Modifier.align(Alignment.CenterEnd).padding(end = 20.dp)
             )
             ZoneButton(
                 zone = FaceZone.NOSE,
-                score = zoneAnalysis[FaceZone.NOSE]?.values?.maxOrNull() ?: 0f,
+                score = zoneAnalysis[FaceZone.NOSE]?.values?.average()?.toFloat() ?: 0f,
                 onClick = { onZoneSelected(FaceZone.NOSE) },
                 modifier = Modifier.align(Alignment.Center)
             )
             ZoneButton(
                 zone = FaceZone.CHIN,
-                score = zoneAnalysis[FaceZone.CHIN]?.values?.maxOrNull() ?: 0f,
+                score = zoneAnalysis[FaceZone.CHIN]?.values?.average()?.toFloat() ?: 0f,
                 onClick = { onZoneSelected(FaceZone.CHIN) },
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp)
             )
