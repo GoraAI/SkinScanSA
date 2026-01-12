@@ -32,7 +32,6 @@ class LLMInference @Inject constructor(
         private const val TAG = "LLMInference"
         private const val UNLOAD_DELAY_MS = 30_000L // 30 seconds idle before unload
         private const val MAX_TOKENS = 256
-        private const val TOP_K = 40
         private const val TEMPERATURE = 0.8f
     }
 
@@ -103,7 +102,6 @@ class LLMInference @Inject constructor(
                 val options = LlmInferenceOptions.builder()
                     .setModelPath(modelPath)
                     .setMaxTokens(MAX_TOKENS)
-                    .setTopK(TOP_K)
                     .setTemperature(TEMPERATURE)
                     .build()
 
