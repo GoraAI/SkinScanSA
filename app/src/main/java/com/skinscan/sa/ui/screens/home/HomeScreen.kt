@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Home
@@ -30,6 +31,8 @@ import androidx.compose.material.icons.outlined.Face
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
+import com.skinscan.sa.R
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -213,11 +216,11 @@ private fun StartScanButton(onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Face,
-                contentDescription = null,
-                tint = TealAccent,
-                modifier = Modifier.size(48.dp)
+            // Glow Guide logo instead of face icon
+            Image(
+                painter = painterResource(id = R.drawable.glow_guide_logo),
+                contentDescription = "Glow Guide",
+                modifier = Modifier.size(56.dp)
             )
             Spacer(modifier = Modifier.height(Spacing.s))
             Text(
