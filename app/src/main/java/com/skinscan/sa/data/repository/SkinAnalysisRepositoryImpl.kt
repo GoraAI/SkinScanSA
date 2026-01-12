@@ -34,8 +34,31 @@ class SkinAnalysisRepositoryImpl @Inject constructor(
         private const val TAG = "SkinAnalysisRepo"
     }
 
+    @Volatile
+    private var isInitialized = false
+
+    /**
+     * Ensure ML models are initialized before use
+     */
+    private fun ensureInitialized() {
+        if (!isInitialized) {
+            synchronized(this) {
+                if (!isInitialized) {
+                    Log.d(TAG, "Initializing ML models...")
+                    val faceDetectInit = faceDetectionService.initialize()
+                    val analysisInit = skinAnalysisInference.initialize()
+                    Log.d(TAG, "ML initialization complete: faceDetect=$faceDetectInit, analysis=$analysisInit")
+                    isInitialized = true
+                }
+            }
+        }
+    }
+
     override suspend fun analyzeFace(image: Bitmap, userId: String): ScanResultEntity {
         Log.d(TAG, "Starting face analysis for user: $userId")
+
+        // Ensure models are loaded
+        ensureInitialized()
 
         try {
             // Step 1: Detect face (Story 2.3)
